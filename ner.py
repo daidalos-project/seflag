@@ -1,3 +1,5 @@
+import os.path
+
 import evaluate
 import yaml
 from datasets import load_dataset
@@ -101,5 +103,8 @@ def run_evaluation(file_name: str, reference_column_name: str, word_column_name:
 
 
 mappings: Mappings = Mappings("mappings.yaml")
-run_evaluation("dev.tsv", "entity", "word", annotate_greek_texts, mappings.per_loc_misc, mappings.per_loc_misc)
-run_evaluation("GWtest.crf", "Label", "Word", annotate_latin_texts, mappings.prs_geo_grp, mappings.per_loc_norp)
+data_dir: str = os.path.abspath("data")
+greek_data_path: str = os.path.join(data_dir, "dev.tsv")
+latin_data_path: str = os.path.join(data_dir, "GWtest.crf")
+run_evaluation(greek_data_path, "entity", "word", annotate_greek_texts, mappings.per_loc_misc, mappings.per_loc_misc)
+run_evaluation(latin_data_path, "Label", "Word", annotate_latin_texts, mappings.prs_geo_grp, mappings.per_loc_norp)
