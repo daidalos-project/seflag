@@ -1,2 +1,2 @@
-# seflag
-Systematic Evaluation Framework for NLP models and datasets in Latin and Ancient Greek
+# SEFLAG
+**S**ystematic **E**valuation **F**ramework for NLP models and datasets in **L**atin and **A**ncient **G**reek

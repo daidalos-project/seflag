@@ -1,0 +1,38 @@
+# This file contains mappings from various annotation schemas to common numeric values.
+# Such a conversion facilitates the application of algorithms to datasets and ensures their conceptual compatibility.
+# Currently, we support the following schemas:
+# PER LOC MISC; used by the UGARIT/flair_grc_multi_ner model and the corresponding dataset
+# https://www.researchgate.net/publication/365131651_Transformer-Based_Named_Entity_Recognition_for_Ancient_Greek
+per_loc_misc:
+  # add both the letter O and the number 0 because some values are not used consistently
+  "O": 0
+  "0": 0
+  # persons
+  "PER": 1
+  # locations
+  "LOC": 2
+  # miscellaneous, such as peoples
+  "MISC": 3
+# PER LOC NORP; used by the LatinCy NER tagger
+# https://arxiv.org/pdf/2305.04365
+per_loc_norp:
+  # add an empty string because this schema only provides explicit values for named entities
+  "": 0
+  # persons
+  "PERSON": 1
+  # locations
+  "LOC": 2
+  # groups of people
+  "NORP": 3
+# PRS GEO GRP; used by the Herodotos dataset
+# https://github.com/Herodotos-Project/Herodotos-Project-Latin-NER-Tagger-Annotation
+prs_geo_grp:
+  # add both the letter O and the number 0 because some values are not used consistently
+  "O": 0
+  "0": 0
+  # persons
+  "PRS": 1
+  # locations
+  "GEO": 2
+  # groups
+  "GRP": 3
