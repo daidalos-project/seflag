@@ -29,12 +29,11 @@ documents, photos, people, countries)? Are there multiple types of
 instances (e.g., movies, users, and ratings; people and interactions
 between them; nodes and edges)? Please provide a description.
 
-- Ancient Greek text, passages from Odyssey (Homer), Deipnosophists
-(Athenaeus of Naucratis), Histories (Herodotus)
+- The Ancient Greek text was extracted from Odyssey (Homer), Deipnosophists (Athenaeus of Naucratis) and Histories (Herodotus). It contains annotations for names of persons, locations and other entities such as peoples.
 
 How many instances are there in total (of each type, if appropriate)?
 
-- 24,631 instances in total
+- 82,957 instances in total
 
 Does the dataset contain all possible instances or is it a sample (not
 necessarily random) of instances from a larger set? If the dataset is a
@@ -44,15 +43,13 @@ representative of the larger set, please describe why not (e.g., to
 cover a more diverse range of instances, because instances were withheld
 or unavailable).
 
-- The dataset is a non-representative sample of Ancient Greek
-literature, passages from Odyssey (Homer), Deipnosophists (Athenaeus of
-Naucratis), Histories (Herodotus).
+- The dataset contains the *dev* and *test* splits of the original dataset. The *train* split has not been published.
 
 What data does each instance consist of? "Raw" data (e.g., unprocessed
 text or images) or features? In either case, please provide a
 description.
 
-- Text
+- Tokenized text with 2-way annotated NER labels
 
 Is there a label or target associated with each instance? If so, please
 provide a description.
@@ -243,6 +240,8 @@ Was the "raw" data saved in addition to the preprocessed/cleaned/labeled
 data (e.g., to support unanticipated future uses)? If so, please provide a link or other
 access point to the "raw" data.
 
+- The data can be downloaded from: https://huggingface.co/UGARIT/flair_grc_multi_ner/tree/main
+
 Any other comments?
 
 - No
@@ -253,7 +252,7 @@ Has the dataset been used for any tasks already? If so, please provide a
 description.
 
 - It has been used to train and test the performance of Ancient Greek
-Alignment and Ancient Greek BERT models
+alignment and Ancient Greek BERT models
 
 Is there a repository that links to any or all papers or systems that
 use the dataset? If so, please provide a link or other access point.
@@ -272,7 +271,7 @@ other risks or harms (e.g., legal risks, financial harms)? If so, please
 provide a description. Is there anything a dataset consumer could do to
 mitigate these risks or harms?
 
-- unknown
+- Strong class imbalance (most tokens are non-entities)
 
 Are there tasks for which the dataset should not be used? If so, please
 provide a description.

@@ -1,8 +1,10 @@
+import csv
 import os.path
 
 import evaluate
 import yaml
-from datasets import load_dataset
+from datasets import load_dataset, DatasetDict, Dataset, concatenate_datasets
+from evaluate import EvaluationModule
 from tqdm import tqdm
 import la_core_web_lg
 from flair.data import Sentence
@@ -38,7 +40,7 @@ def annotate_latin_texts(words: list[str]) -> list[str]:
     # !pip install https://huggingface.co/latincy/la_core_web_lg/resolve/main/la_core_web_lg-any-py3-none-any.whl
     nlp: Language = la_core_web_lg.load()
     values: list[str] = []
-    for word in words:
+    for word in tqdm(words):
         doc: Doc = nlp(word)
         values.append(doc[0].ent_type_)
     return values
@@ -46,29 +48,12 @@ def annotate_latin_texts(words: list[str]) -> list[str]:
 
 def calculate_metrics(predictions, references):
     """ Calculates various metrics for the given predictions and references (i.e., ground truth). """
-    precision = evaluate.load("precision")
-    print("Weighted precision:")
-    print(precision.compute(predictions=predictions, references=references, average="weighted"))
-    print("Micro precision:")
-    print(precision.compute(predictions=predictions, references=references, average="micro"))
-    print("Macro precision:")
-    print(precision.compute(predictions=predictions, references=references, average="macro"))
-
-    recall = evaluate.load("recall")
-    print("Weighted recall:")
-    print(recall.compute(predictions=predictions, references=references, average="weighted"))
-    print("Micro recall:")
-    print(recall.compute(predictions=predictions, references=references, average="micro"))
-    print("Macro recall:")
-    print(recall.compute(predictions=predictions, references=references, average="macro"))
-
-    f1 = evaluate.load("f1")
-    print("Weighted f1:")
-    print(f1.compute(predictions=predictions, references=references, average="weighted"))
-    print("Micro f1:")
-    print(f1.compute(predictions=predictions, references=references, average="micro"))
-    print("Macro f1:")
-    print(f1.compute(predictions=predictions, references=references, average="macro"))
+    averages: list[str] = ["weighted", "micro", "macro"]
+    metrics: list[str] = ["precision", "recall", "f1"]
+    for metric in metrics:
+        evaluation_module: EvaluationModule = evaluate.load(metric)
+        for average in averages:
+            print(average, evaluation_module.compute(predictions=predictions, references=references, average=average))
 
 
 def map_labels(original_labels, mapping):
@@ -81,30 +66,27 @@ def map_labels(original_labels, mapping):
     return labels_mapped
 
 
-def run_evaluation(file_name: str, reference_column_name: str, word_column_name: str, annotation_fn: callable,
+def run_evaluation(folder_path: str, reference_column_name: str, word_column_name: str, annotation_fn: callable,
                    references_mapping: dict, predictions_mapping: dict):
     """ Performs evaluation of an NER model for the given dataset. """
-    dataset_full = load_dataset("csv", split="train", data_files=file_name, sep="\t")
-    print(dataset_full)
-    # reduce dataset size for testing purposes
-    dataset_selection = dataset_full.select(list(range(100)))
+    # disable quoting in Pandas because the dataset contains quotation marks as single tokens
+    dataset_with_splits: DatasetDict = load_dataset("csv", data_dir=folder_path, sep="\t", quoting=csv.QUOTE_NONE)
+    splits: list[str] = list(dataset_with_splits.shape.keys())
+    dataset_combined: Dataset = concatenate_datasets([dataset_with_splits[x] for x in splits])
+    # you can reduce dataset size for testing purposes
+    dataset_selection = dataset_combined  # .select(list(range(100)))
     print(dataset_selection)
-    Reference = dataset_selection[reference_column_name]
-    print(f"Lenght G_Reference: {len(Reference)}")
-    references = map_labels(Reference, references_mapping)
-    print(f"Length references: {len(references)}")
+    references_raw = dataset_selection[reference_column_name]
+    references_mapped = map_labels(references_raw, references_mapping)
     words: list[str] = dataset_selection[word_column_name]
     ner_labels: list[str] = annotation_fn(words)
-    print(ner_labels[0:20])
-    print(len(ner_labels))
-    print("Tagging done")
     predictions = map_labels(ner_labels, predictions_mapping)
-    calculate_metrics(predictions, references)
+    calculate_metrics(predictions, references_mapped)
 
 
 mappings: Mappings = Mappings("mappings.yaml")
 data_dir: str = os.path.abspath("data")
-greek_data_path: str = os.path.join(data_dir, "dev.tsv")
-latin_data_path: str = os.path.join(data_dir, "GWtest.crf")
+greek_data_path: str = os.path.join(data_dir, "yousef_et_al_dataset")
+latin_data_path: str = os.path.join(data_dir, "Herodotos_dataset")
 run_evaluation(greek_data_path, "entity", "word", annotate_greek_texts, mappings.per_loc_misc, mappings.per_loc_misc)
 run_evaluation(latin_data_path, "Label", "Word", annotate_latin_texts, mappings.prs_geo_grp, mappings.per_loc_norp)

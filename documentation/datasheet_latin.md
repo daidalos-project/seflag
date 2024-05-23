@@ -285,7 +285,7 @@ other risks or harms (e.g., legal risks, financial harms)? If so, please
 provide a description. Is there anything a dataset consumer could do to
 mitigate these risks or harms?
 
-- unknown
+- Strong class imbalance (most tokens are non-entities)
 
 Are there tasks for which the dataset should not be used? If so, please
 provide a description.
