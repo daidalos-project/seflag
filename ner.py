@@ -1,16 +1,16 @@
 import csv
 import os.path
-
-import evaluate
 import yaml
 from datasets import load_dataset, DatasetDict, Dataset, concatenate_datasets
-from evaluate import EvaluationModule
 from tqdm import tqdm
 import la_core_web_lg
 from flair.data import Sentence
 from flair.models import SequenceTagger
 from spacy import Language
 from spacy.tokens import Doc
+
+from config import Config
+from metrics import precision_recall_f1
 
 
 class Mappings:
@@ -46,19 +46,9 @@ def annotate_latin_texts(words: list[str]) -> list[str]:
     return values
 
 
-def calculate_metrics(predictions, references):
-    """ Calculates various metrics for the given predictions and references (i.e., ground truth). """
-    averages: list[str] = ["weighted", "micro", "macro"]
-    metrics: list[str] = ["precision", "recall", "f1"]
-    for metric in metrics:
-        evaluation_module: EvaluationModule = evaluate.load(metric)
-        for average in averages:
-            print(average, evaluation_module.compute(predictions=predictions, references=references, average=average))
-
-
-def map_labels(original_labels, mapping):
+def map_labels(original_labels, mapping: dict[str, int]) -> list[int]:
     """ Applies a mapping to string labels, thereby converting them to integers. """
-    labels_mapped = []
+    labels_mapped: list[int] = []
     for label in original_labels:
         for key in mapping:
             if (len(key) <= 1 and key == label) or (len(key) > 1 and key in label):
@@ -77,16 +67,15 @@ def run_evaluation(folder_path: str, reference_column_name: str, word_column_nam
     dataset_selection = dataset_combined  # .select(list(range(100)))
     print(dataset_selection)
     references_raw = dataset_selection[reference_column_name]
-    references_mapped = map_labels(references_raw, references_mapping)
+    references_mapped: list[int] = map_labels(references_raw, references_mapping)
     words: list[str] = dataset_selection[word_column_name]
     ner_labels: list[str] = annotation_fn(words)
-    predictions = map_labels(ner_labels, predictions_mapping)
-    calculate_metrics(predictions, references_mapped)
+    predictions: list[int] = map_labels(ner_labels, predictions_mapping)
+    precision_recall_f1(predictions, references_mapped)
 
 
 mappings: Mappings = Mappings("mappings.yaml")
-data_dir: str = os.path.abspath("data")
-greek_data_path: str = os.path.join(data_dir, "yousef_et_al_dataset")
-latin_data_path: str = os.path.join(data_dir, "Herodotos_dataset")
+greek_data_path: str = os.path.join(Config.data_dir, "yousef_et_al_dataset")
+latin_data_path: str = os.path.join(Config.data_dir, "Herodotos_dataset")
 run_evaluation(greek_data_path, "entity", "word", annotate_greek_texts, mappings.per_loc_misc, mappings.per_loc_misc)
 run_evaluation(latin_data_path, "Label", "Word", annotate_latin_texts, mappings.prs_geo_grp, mappings.per_loc_norp)
