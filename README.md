@@ -6,11 +6,14 @@
 
 ### Lemmatization on UD test data
 
-#### Ancient Greek: greCy
+#### Ancient Greek: greCy (grc_proiel_trf)
 
 {'accuracy': 0.8942049121548943}
 
-#### Latin: LatinCy
+#### Ancient Greek: greCy (grc_proiel_lg)
+{'accuracy': 0.9055216923628541}
+
+#### Latin: LatinCy (la_core_web_lg)
 
 {'accuracy': 0.8843245653143111}
 

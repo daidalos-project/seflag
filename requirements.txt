@@ -52,6 +52,7 @@ gdown==5.1.0
 gensim==4.3.2
 gitdb==4.0.11
 GitPython==3.1.43
+grc_proiel_lg==3.7.5
 grc_proiel_trf==3.7.5
 grecy==1.0
 greek-accentuation==1.2.0

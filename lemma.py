@@ -32,7 +32,7 @@ def lemmatize_greek(tokens: list[str]) -> list[str]:
     """ Lemmatizes Ancient Greek tokens using spaCy. """
     if not Models.lemmatizer_greek:
         Models.lemmatizer_greek = spacy.load(
-            "grc_proiel_trf",  # grc_proiel_trf grc_odycy_joint_trf
+            "grc_proiel_lg",  # grc_proiel_trf grc_odycy_joint_trf
             exclude=["morphologizer", "parser", "tagger", "transformer"],  #
         )
     doc: Doc = Models.lemmatizer_greek(Doc(vocab=Models.lemmatizer_greek.vocab, words=tokens))
@@ -86,6 +86,8 @@ def run_evaluation(lemmatization_fn: callable, data_dir: str):
         new_lemmata_true: list[str] = [tok["lemma"] for tok in sent]
         lemmata_true += new_lemmata_true
         lemmata_predicted += lemmatization_fn(words)
+    print("Errors: ", [(lemmata_predicted[i], lemmata_true[i]) for i in range(len(lemmata_true)) if
+                       lemmata_predicted[i] != lemmata_true[i]])
     predictions_int, references_int = convert_labels(lemmata_predicted, lemmata_true)
     accuracy(predictions_int, references_int)
 
