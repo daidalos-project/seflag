@@ -28,3 +28,10 @@
 | **Precision** | 96 -- 94 -- 66     | 96 -- 96 -- 59 |
 | **Recall**    | 94 -- 94 -- 76     | 96 -- 96 -- 60 |
 | **F1**        | 95 -- 94 -- 64     | 96 -- 96 -- 58 |
+
+### Dependency Parsing
+
+- evaluation script: conll18_ud_eval.py
+- problems/deviations:
+  - circular root annotations (words pointing to themselves) >> fixed by setting the relation target to '0' instead of the word itself
+  - multiple root nodes per sentence >> ignored

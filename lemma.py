@@ -43,7 +43,7 @@ def lemmatize_latin(tokens: list[str]) -> list[str]:
     """Lemmatizes Latin tokens using spaCy."""
     if not Models.lemmatizer_latin:
         Models.lemmatizer_latin = spacy.load(
-            'la_core_web_lg', exclude=["morphologizer", "parser", "tagger", "ner"])
+            "la_core_web_lg", exclude=["morphologizer", "parser", "tagger", "ner"])
     doc: Doc = Models.lemmatizer_latin(Doc(vocab=Models.lemmatizer_latin.vocab, words=tokens))
     return [x.lemma_ for x in doc]
 
@@ -93,4 +93,4 @@ def run_evaluation(lemmatization_fn: callable, data_dir: str):
 
 
 # run_evaluation(lemmatize_greek, os.path.join(Config.lemmatization_dir, "greek"))
-# run_evaluation(lemmatize_latin, os.path.join(Config.lemmatization_dir, "latin"))
+run_evaluation(lemmatize_latin, os.path.join(Config.lemmatization_dir, "latin"))
