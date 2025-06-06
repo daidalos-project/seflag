@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/803810381.svg)](https://doi.org/10.5281/zenodo.13951323)
+
 # SEFLAG
 
 **S**ystematic **E**valuation **F**ramework for NLP models and datasets in **L**atin and **A**ncient **G**reek
