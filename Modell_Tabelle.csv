@@ -1,0 +1,3 @@
+model_name	data_format	language	period	embedding_method	Quelle	download_link
+grc_fasttext_cbow_nn2_xn10_dim100	.bin	Greek		fasttext	Jacobo Myerston. (2021). Ancient Greek Fasttext Word Embeddings (v. 1.2.2) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.7630945	https://zenodo.org/records/7630945/files/grc_fasttext_cbow_nn2_xn10_dim100.bin?download=1
+grc_fasttext_cbow_nn2_xn10_dim50	.bin	Greek		fasttext	Jacobo Myerston. (2021). Ancient Greek Fasttext Word Embeddings (v. 1.2.2) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.7630945	https://zenodo.org/records/7630945/files/grc_fasttext_cbow_nn2_xn10_dim50.bin?download=1
