@@ -35,3 +35,6 @@
 - problems/deviations:
   - circular root annotations (words pointing to themselves) >> fixed by setting the relation target to '0' instead of the word itself
   - multiple root nodes per sentence >> ignored
+
+### Roadmap
+- Overview with metadata for every dataset

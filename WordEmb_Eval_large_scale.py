@@ -76,11 +76,30 @@ def run_evaluation(metafile, goldpath, gold_language="Greek", goldtype="similari
                             })
     df = pd.DataFrame(results)
     print(df)
-    df.to_csv("evaluation_results.csv", index=False)
+    saving_path = os.getcwd()
+    results_path = os.path.join(saving_path, "evaluation_results_1.csv")
+    result_run_nr = 1
+    if os.path.exists(results_path):
+        result_paths = [path for path in os.listdir(saving_path) if os.path.basename(path).startswith("evaluation_results_")]
+        version_nrs = []
+        for result_path in result_paths:
+            version_nr = result_path[-5]
+            version_nrs.append(version_nr)
+        result_run_nr = int(max(version_nrs)) + 1
+        results_path = os.path.join(saving_path, f"evaluation_results_{result_run_nr}.csv")
+        df.to_csv(results_path, index=False)
+    else:
+        df.to_csv("evaluation_results_1.csv", index=False)
     print("Done.")
 
-metafile = "C:/Users/IuvenisGrammaticus/Documents/Python_Arbeit/word_embeddings/Modell_Tabelle.csv"
-goldpath = "C:/Users/IuvenisGrammaticus/Documents/Python_Arbeit/data/word-embeddings-dicts/AGREE/2_agree_task2.json"
+# - - sēmita ad data - - #
+
+metafile = os.path.join(os.getcwd(), "Modell_Tabelle.csv")
+# AGREE
+goldpath = os.path.join(os.getcwd(), "data/2_agree_task2.json")
+# syn-selection-benchmark-Latin.tsv
+# goldpath = os.path.join(os.getcwd(), "data/word-embeddings-dicts/syn-selection-benchmark-Latin.tsv")
+
 
 run_evaluation(metafile, goldpath)
 
