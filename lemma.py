@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from spacy.tokens import Doc
 from tqdm import tqdm
 import xml.etree.ElementTree as ET
-from config import Config
+from config_v0_2 import Config
 from metrics import accuracy
 
 from models import Models
