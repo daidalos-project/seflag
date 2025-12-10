@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from tqdm import tqdm
 
+from metrics import accuracy_for_strings
 from pos_annotation_functions import annotate_latin_texts, annotate_greek_texts
 
 gold_path = os.path.join(os.getcwd(), "data/POS_Tagging", "lat_dataset_complete.conllu")
@@ -20,6 +21,7 @@ ds = pyconll.load.load_from_file(gold_path)
 pos_gold_data = []
 multiword_token_list = []
 for sentence in ds:
+    sent_tokens = []
     for token in sentence:
         if token.is_multiword() == True:
             form = token.form
@@ -28,7 +30,9 @@ for sentence in ds:
         else:
             form = token.form
             upos = token.upos
-            pos_gold_data.append([form, upos])
+            sent_tokens.append([form, upos])
+            # pos_gold_data.append([form, upos])
+    pos_gold_data.append(sent_tokens)
 
 print(f"Number of tokens in goldstandard after removal of multiword tokens: {len(pos_gold_data)}")
 print(f"Number of multiword tokens excluded from evaluation: {len(multiword_token_list)}")
@@ -36,12 +40,11 @@ print(f"Number of multiword tokens excluded from evaluation: {len(multiword_toke
 # PREPARE AND ANNOTATE TEXT #
 text_for_annotation = ""
 predictions = []
-for sentence in tqdm(ds):
-    tokens = [token.form for token in sentence]
+for sentence in tqdm(pos_gold_data):
+    tokens = [x[0] for x in sentence]
     predictions += annotate_latin_texts(tokens)
     # text = sentence.text
     # text_for_annotation = text_for_annotation + " " + text # type: ignore
-
 
 # ANNOTATE TEXT #
 # predictions_tuple = annotate_latin_texts(text_for_annotation)
@@ -60,7 +63,8 @@ for sentence in ds:
 
 unique_abbr = set(abbr_forms) """
 
-# {'mal.', 'ioan.', 'matth.', 'hab.', 'ier.', 'iac.', 'cor.', 'zach.', 'ethic.', 'num.', 
+
+# {'mal.', 'ioan.', 'matth.', 'hab.', 'ier.', 'iac.', 'cor.', 'zach.', 'ethic.', 'num.',
 # 'sap.', 'rom.', 'nom.', 'metaph.', 'cap.', 'ult.', 'metaphys.', 'deut.', 'reg.', 'ierem.', 
 # 'luc.', 'hebr.', 'gen.', 'heb.', 'eccli.', 'mich.', 'prou.', 'diu.'}
 
@@ -70,19 +74,20 @@ def align_tagged_sequences(pos_gold_data, predictions):
     # pred: list of [str, str]
     # Returns: alignments (list of tuples; (operation, gold_span, pred_span))
     #    - operations: {"equal", "replace", "insert", "delete"}
-   
+
     matcher = SequenceMatcher(None, [g[0] for g in pos_gold_data], [p[0] for p in predictions])
-    
+
     alignments = []
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-        gold_span = pos_gold_data[i1:i2]   # subset of gold sequence
-        pred_span = predictions[j1:j2]   # subset of predicted sequence
+        gold_span = pos_gold_data[i1:i2]  # subset of gold sequence
+        pred_span = predictions[j1:j2]  # subset of predicted sequence
         alignments.append((tag, gold_span, pred_span))
 
     return alignments
 
+
 # alignments = align_tagged_sequences(pos_gold_data, predictions)
-            
+
 # EVALUATE ANNOTATION #
 def eval(alignments):
     index, correct = 0, 0
@@ -92,10 +97,10 @@ def eval(alignments):
                 index += 1
                 if gold_pos == predicted_pos:
                     correct += 1
-        
+
         elif operation == "replace":
-            gold_normalised = [g[0].rstrip(".") for g in gold_span] # Tokenisation errors due to punctuation
-            pred_normalised = [p[0].rstrip(".") for p in pred_span] # Tokenisation errors due to punctuation
+            gold_normalised = [g[0].rstrip(".") for g in gold_span]  # Tokenisation errors due to punctuation
+            pred_normalised = [p[0].rstrip(".") for p in pred_span]  # Tokenisation errors due to punctuation
             if gold_normalised == pred_normalised:
                 index += len(gold_span)
                 correct += len(gold_span)
@@ -107,12 +112,15 @@ def eval(alignments):
     accuracy = correct / index if index else 0.0
     return accuracy, correct_out_of_idx
 
+
 print("Evaluation Latincy:\n")
 
-accuracy, correct_out_of_idx = eval(alignments)
+# accuracy, correct_out_of_idx = eval(alignments)
 
-print(correct_out_of_idx)
-print(f"Accuracy: {accuracy}")
+# print(correct_out_of_idx)
+# print(f"Accuracy: {accuracy}")
+accuracy_for_strings([tok[1] for sent in pos_gold_data for tok in sent], [x[1] for x in predictions])
+
 
 # VISUALISATION OF EVALUATION #
 def collect_tag_pairs(alignments):
@@ -135,11 +143,12 @@ def collect_tag_pairs(alignments):
                 gold_tags.append(gold_span[0][1])
                 pred_tags.append(pred_span[0][1] if pred_span else "MISSING")
 
-
     return gold_tags, pred_tags
 
-gold_tags, pred_tags = collect_tag_pairs(alignments)
 
+# gold_tags, pred_tags = collect_tag_pairs(alignments)
+gold_tags = [tok[1] for sent in pos_gold_data for tok in sent]
+pred_tags = [x[1] for x in predictions]
 cm = confusion_matrix(gold_tags, pred_tags, labels=sorted(set(gold_tags + pred_tags)))
 
 fig, ax = plt.subplots(figsize=(14, 7))

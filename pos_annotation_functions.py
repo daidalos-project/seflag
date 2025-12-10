@@ -18,17 +18,19 @@ from models import Models
 
 # Funktion noch so überarbeiten, dass eine Datei als Argument reicht, indem die Lesefunktionen aufgerufen werden #
 # Tagger Confidence kann noch eingebaut werden.#
-def annotate_latin_texts(tokens: list[str]) -> tuple[list[list[str]]]:
+def annotate_latin_texts(tokens: list[str]) -> list[tuple[str, str]]:
     if not Models.pos_tagger_latin:
-        Models.pos_tagger_latin = spacy.load("la_core_web_lg", exclude=["morphologizer", "parser", "ner"])
+        # need tagger & morphologizer, so the pos_ property is filled with UD tags
+        Models.pos_tagger_latin = spacy.load("la_core_web_lg", exclude=["parser", "ner"])
     doc: Doc = Models.pos_tagger_latin(Doc(vocab=Models.pos_tagger_latin.vocab, words=tokens))
     pos_anno = []
     # lemmata = []
     for token in doc:  # type: ignore
-        pos_anno.append([token.text, token.pos_])
+        # pos_anno.append([token.text, token.pos_])
+        pos_anno.append((token.text, token.pos_))
         #lemmata.append(token.lemma_)
     # pos_anno_str = ' '.join([' '.join(x) for x in pos_anno])
-    return pos_anno, #lemmata
+    return pos_anno #lemmata
 
 ### Greek Annotation Function for Spacy ###
 def annotate_greek_texts(str: str):
