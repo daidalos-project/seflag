@@ -27,6 +27,7 @@ def annotate_latin_texts(tokens: list[str]) -> list[tuple[str, str]]:
     # lemmata = []
     for token in doc:  # type: ignore
         # pos_anno.append([token.text, token.pos_])
+        # optionally, you can use token.tag_ for a different tag set
         pos_anno.append((token.text, token.pos_))
         #lemmata.append(token.lemma_)
     # pos_anno_str = ' '.join([' '.join(x) for x in pos_anno])
