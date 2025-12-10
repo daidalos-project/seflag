@@ -1,3 +1,5 @@
+'''Currently set up for Latin. To evaluate to Greek, change file paths'''
+
 import os
 import pyconll
 from difflib import SequenceMatcher
@@ -5,7 +7,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from pos_annotation_functions import annotate_latin_texts, annotate_greek_texts
 
-gold_path = os.path.join(os.getcwd(), "data/POS_Tagging", "dataset_complete.conllu")
+gold_path = os.path.join(os.getcwd(), "data/POS_Tagging", "lat_dataset_complete.conllu")
 
 # LOAD DATASET #
 ds = pyconll.load.load_from_file(gold_path)

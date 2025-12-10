@@ -35,3 +35,40 @@ def annotate_greek_texts(str: str):
         pos_anno.append([token.text, token.pos_])
     # pos_anno_str = ' '.join([' '.join(x) for x in pos_anno])
     return pos_anno
+
+### Process XML-Files ###
+def process_papygreek(file_path, anno_version="", get_raw_text=False, token_index=False, form=False, lemma=False, pos=False, dep=False):
+    doc = etree.parse(file_path)  # type: ignore
+    root = doc.getroot()
+    data = []
+    tokens = []
+
+    # Choose attribute suffix
+    suffix = "_orig" if anno_version == "orig" else "_reg"
+
+    for word in root.xpath("//word"):
+        entry = {}
+
+        token = word.get(f"form{suffix}")
+        if not token:
+            continue  # Skip if no token
+        tokens.append(token)
+        entry["token"] = token
+
+        if pos:
+            entry["pos"] = word.get(f"postag{suffix}")
+        if lemma:
+            entry["lemma"] = word.get(f"lemma{suffix}")
+        if form:
+            entry["form"] = token  # Already retrieved
+        if dep:
+            entry["id"] = word.get("id")
+            entry["deprel"] = word.get(f"relation{suffix}")
+            entry["head"] = word.get(f"head{suffix}")
+        if token_index:
+            entry["id"] = word.get("id")
+
+        data.append(entry)
+
+    raw_str = " ".join(tokens) if get_raw_text else None
+    return data, raw_str

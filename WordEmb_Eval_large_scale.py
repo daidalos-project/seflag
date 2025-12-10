@@ -43,7 +43,7 @@ def run_evaluation(metafile, goldpath, gold_language="Greek", goldtype="similari
                 print(f"Evaluating {model_name}...")
                 if language == "Greek":
                     if goldtype == "similarity":
-                        pearson, spearman, oov_ratio, top_1_accuracy, top_10_recall = evaluate_grc_embeddings(model, goldpath)
+                        pearson, spearman, oov_ratio, top_1_accuracy, top_10_accuracy = evaluate_grc_embeddings(model, goldpath)
                         results.append({
                             "model_name": model_name,
                             "language": language,
@@ -51,7 +51,7 @@ def run_evaluation(metafile, goldpath, gold_language="Greek", goldtype="similari
                             "embedding_method": embedding_method,
                             "gold_standard": os.path.basename(goldpath),
                             "top_1_accuracy": top_1_accuracy,
-                            "top_10_recall": top_10_recall,
+                            "top_10_accuracy": top_10_accuracy,
                             "spearman_corr": spearman,
                             "pearson's r": pearson,
                             "oov_ratio": oov_ratio,
@@ -64,14 +64,14 @@ def run_evaluation(metafile, goldpath, gold_language="Greek", goldtype="similari
                     # if goldtype == "similarity":
                     # if goldtype == "analogy":
                     if goldtype == "synonymity":
-                        distractor_ranking, top_1_accuracy, top_10_recall = evaluate_lat_embeddings(model, goldpath)
+                        distractor_ranking, top_1_accuracy, top_10_accuracy = evaluate_lat_embeddings(model, goldpath)
                         results.append({
                             "model_name": model_name,
                             "language": language,
                             "period": period,
                             "embedding_method": embedding_method,
                             "top_1_accuracy": top_1_accuracy,
-                            "top_10_recall": top_10_recall,
+                            "top_10_accuracy": top_10_accuracy,
                             "distractor_ranking": distractor_ranking
                             })
     df = pd.DataFrame(results)
@@ -102,6 +102,3 @@ goldpath = os.path.join(os.getcwd(), "data/2_agree_task2.json")
 
 
 run_evaluation(metafile, goldpath)
-
-
-# Top-1 Accuracy und top-10 recall umbenennen in accuracy
