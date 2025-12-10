@@ -5,6 +5,8 @@ import pyconll
 from difflib import SequenceMatcher
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from tqdm import tqdm
+
 from pos_annotation_functions import annotate_latin_texts, annotate_greek_texts
 
 gold_path = os.path.join(os.getcwd(), "data/POS_Tagging", "lat_dataset_complete.conllu")
@@ -31,15 +33,19 @@ for sentence in ds:
 print(f"Number of tokens in goldstandard after removal of multiword tokens: {len(pos_gold_data)}")
 print(f"Number of multiword tokens excluded from evaluation: {len(multiword_token_list)}")
 
-# PREPARE TEXT FOR ANNOTATION #
+# PREPARE AND ANNOTATE TEXT #
 text_for_annotation = ""
-for sentence in ds:
-    text = sentence.text
-    text_for_annotation = text_for_annotation + " " + text # type: ignore
+predictions = []
+for sentence in tqdm(ds):
+    tokens = [token.form for token in sentence]
+    predictions += annotate_latin_texts(tokens)
+    # text = sentence.text
+    # text_for_annotation = text_for_annotation + " " + text # type: ignore
+
 
 # ANNOTATE TEXT #
-predictions_tuple = annotate_latin_texts(text_for_annotation)
-predictions = predictions_tuple[0]
+# predictions_tuple = annotate_latin_texts(text_for_annotation)
+# predictions = predictions_tuple[0]
 
 print(f"Number of tokens in predictions: {len(predictions)}")
 
@@ -75,7 +81,7 @@ def align_tagged_sequences(pos_gold_data, predictions):
 
     return alignments
 
-alignments = align_tagged_sequences(pos_gold_data, predictions)
+# alignments = align_tagged_sequences(pos_gold_data, predictions)
             
 # EVALUATE ANNOTATION #
 def eval(alignments):
