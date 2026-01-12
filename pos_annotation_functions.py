@@ -21,7 +21,7 @@ from models import Models
 def annotate_latin_texts(tokens: list[str]) -> list[tuple[str, str]]:
     if not Models.pos_tagger_latin:
         # need tagger & morphologizer, so the pos_ property is filled with UD tags
-        Models.pos_tagger_latin = spacy.load("la_core_web_lg", exclude=["parser", "ner"])
+        Models.pos_tagger_latin = spacy.load("la_core_web_lg", exclude=[])  # "parser", "ner"
     doc: Doc = Models.pos_tagger_latin(Doc(vocab=Models.pos_tagger_latin.vocab, words=tokens))
     pos_anno = []
     # lemmata = []

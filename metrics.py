@@ -10,7 +10,6 @@ def accuracy(y_pred: list[int], y_true: list[int]):
 
 def accuracy_for_strings(y_pred: list[str], y_true: list[str]):
     """ Calculates the accuracy of the predicted results against the ground truth. """
-    evaluation_module: EvaluationModule = evaluate.load("accuracy")
     distinct_values: set[str] = set(y_pred + y_true)
     label_to_int: dict[str, int] = {value: idx for idx, value in enumerate(distinct_values)}
     print(accuracy([label_to_int[x] for x in y_pred], [label_to_int[x] for x in y_true]))
