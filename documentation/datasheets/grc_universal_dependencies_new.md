@@ -7,7 +7,7 @@ The question have been answered to the best of the knowledge of the Daidalos Tea
 AGDT = Ancient Greek Dependency Treebank = Perseus Treenbank
 Perseus = Perseus Treebank
 PTNK = UD Ancient Greek PTNK
-PROEIL = Pragmatic Resources of Old Indo-European Languages, UD Ancient Greek PROIEL
+PROIEL = Pragmatic Resources of Old Indo-European Languages, UD Ancient Greek PROIEL
 SEFLAG = Systematic Evaluation Framework for natural language processing models and datasets in Latin and Ancient Greek
 UD = Universal Dependencies
 

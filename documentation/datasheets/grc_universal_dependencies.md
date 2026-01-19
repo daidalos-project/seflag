@@ -110,7 +110,7 @@ Who was involved in the data collection process (e.g., students, crowdworkers, c
 
 - UD: 
 - AGLDT: Name of Annotators are contained in the .xml files
-- PROEIL:
+- PROIEL:
 - Perseus:
 
 Over what timeframe was the data collected? Does this timeframe match the creation timeframe of the data associated with the instances (e.g., recent crawl of old news articles)? If not, please describe the timeframe in which the data associated with the instances was created. 

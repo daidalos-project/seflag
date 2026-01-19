@@ -5,7 +5,7 @@ The question have been answered to the best of the knowledge of the Daidalos Tea
 # Abbreviations
 
 Perseus = Latin Dependency Treebank , UD Latin Perseus
-PROEIL = Pragmatic Resources of Old Indo-European Languages, UD Latin PROIEL
+PROIEL = Pragmatic Resources of Old Indo-European Languages, UD Latin PROIEL
 SEFLAG = Systematic Evaluation Framework for natural language processing models and datasets in Latin and Ancient Greek
 UD = Universal Dependencies
 UDante = UDante Treebank, UD Latin UDante
