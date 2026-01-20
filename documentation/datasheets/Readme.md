@@ -1,6 +1,6 @@
 NOTE: This template for datasheets for ancient language data is based on the proposal by Gebru et al. 2021 https://arxiv.org/abs/1803.09010.
 The majority of questions is taken from there, but in a slightly rearanged order. However, as some questions are not relevant for historical data, they have been left out. Questions which are of relevance for Humanities scholars researching ancient languages have been added.
-The question have been answered to the best of the knowledge of the Daidalos Team.
+The questions have been answered to the best of the knowledge of the Daidalos Team.
 
 # Abbreviations
 
