@@ -1,5 +1,5 @@
 '''This Code produces two separate .csv-tables with 
-pos-statistics for the .conllu- corpus and the .xml-corpus.'''
+pos-statistics for the .conllu-corpus and the .xml-corpus.'''
 
 import pyconll
 import pandas as pd
@@ -73,7 +73,7 @@ with open("pos_count.csv", "w", encoding="utf-8", newline="") as csvfile:
             dict(combined_anno_counts)
         ])
 
-## PARS PERTINENS PAPYGREEK ##
+## PARS PERTINENS AD PAPYGREEK ##
 from pos_annotation_functions import process_papygreek
 csv_file_path = os.path.join(os.getcwd(), "cross_annatation_scheme_eval/agdtb_pos_statistik.csv")
 

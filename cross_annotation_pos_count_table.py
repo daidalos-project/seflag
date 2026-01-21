@@ -10,7 +10,7 @@ from pos_annotation_functions import process_papygreek
 
 ## CORPUS TEXTORUM CONLL-U ##
 
-ds_path = os.path.join(os.getcwd(), "gold_standards/gr_dataset_complete.conllu")
+ds_path = os.path.join(os.getcwd(), "data/Dependency_Parsing/grc_ud_test_dataset_for_use_of_SEFLAG/grc_perseus-ud-test.conllu")
 ds = pyconll.load_from_file(ds_path) # type: ignore
 
 ## CORPUS TEXTORUM XML ##
@@ -23,8 +23,7 @@ morph_anno_csv_file_path = os.path.join(os.getcwd(), "cross_annotation_scheme_ev
 pos_csv_file_path = os.path.join(os.getcwd(), "cross_annotation_scheme_eval/cross_corpus_pos_stat.csv")
 lemma_csv_file_path = os.path.join(os.getcwd(), "cross_annotation_scheme_eval/cross_corpus_lemma_stat.csv")
 
-
-## PARS PERTINENS CONLL-U ##
+## PARS PERTINENS AD CONLL-U ##
 
 conllu_data = {}
 
