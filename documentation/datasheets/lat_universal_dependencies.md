@@ -3,7 +3,7 @@
 ## MOTIVATION
 For what purpose was the dataset created? Was there a specific task in mind? Was there a specific gap that needed to be filled? Please provide a description.
 
-- The dataset consists of the test splits of all latin treebanks created for the Universal Dependencies Project (see below), namely: the ITTB, LLCT, UDante, CIRCSE, Perseus and PROEIL UD Treebanks
+- The dataset consists of the test splits of all latin treebanks created for the Universal Dependencies Project (see below), namely: the ITTB, LLCT, UDante, CIRCSE, Perseus and PROIEL UD Treebanks
 - Abridged from https://universaldependencies.org/introduction.html#introduction (as of Sept. 2025): The Universal Dependencies (UD) treebanks were created to facilitate multilingual syntactic analysis and parsing by providing a standardized framework for dependency structures across languages. The goal was to support a broad range of tasks such as natural language understanding, machine translation, and cross-lingual studies, while addressing the lack of consistent linguistic annotations across diverse languages. 
 - "The annotation scheme is based on an evolution of (universal) Stanford dependencies (de Marneffe et al., 2006, 2008, 2014), Google universal part-of-speech tags (Petrov et al., 2012), and the Interset interlingua for morphosyntactic tagsets (Zeman, 2008)." https://universaldependencies.org/introduction.html#introduction (as of Sept. 2025)
 - Information below is taken/quoted from https://universaldependencies.org/introduction.html#project-organization (as of Sept. 2025):

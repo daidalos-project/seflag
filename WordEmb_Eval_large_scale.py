@@ -5,7 +5,7 @@ import gensim
 from gensim.models import KeyedVectors
 from gensim.test.utils import datapath
 import pandas as pd
-from word_embeddings.eval_functions import evaluate_grc_embeddings, evaluate_lat_embeddings
+from evaluate_embeddings import evaluate_grc_embeddings, evaluate_lat_embeddings
 
 def run_evaluation(metafile, goldpath, gold_language="Greek", goldtype="similarity", file_ending=".bin", model_type="fasttext"):  
     results = []
