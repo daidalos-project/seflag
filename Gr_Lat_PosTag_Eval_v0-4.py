@@ -96,7 +96,7 @@ cm = confusion_matrix(gold_tags, pred_tags, labels=sorted(set(gold_tags + pred_t
 
 fig, ax = plt.subplots(figsize=(14, 7)) # Creates figure with specified size
 disp = ConfusionMatrixDisplay(confusion_matrix=cm, # Create CM with sklearn
-                              display_labels=sorted(set(gold_tags + pred_tags)))
+                               display_labels=sorted(set(gold_tags + pred_tags)))
 disp.plot(cmap="Greens", values_format="d", ax=ax, colorbar=False)
 plt.title("POS Tag Confusion Matrix")
 plt.xticks(fontsize=10, rotation=45, ha='right')

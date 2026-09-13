@@ -26,9 +26,9 @@ def run_evaluation(metafile, goldpath, gold_language="Greek", goldtype="similari
             if data_format.strip().lstrip(".").lower() == file_ending.strip().lstrip(".").lower() \
             and embedding_method.strip().lower() == model_type.lower() \
             and language.strip().lower() == gold_language.lower():
-                model_path = os.path.join(os.getcwd(), f"word_embeddings/models/{model_name}{data_format}")
+                model_path = os.path.join(os.getcwd(), f"word_embeddings_models/{model_name}{data_format}")
                 if not os.path.exists(model_path):
-                    print(f"  Downloading {model_name}...")
+                    print(f"Downloading {model_name}...")
                     r = requests.get(download_link, stream=True)
                     with open(model_path, "wb") as f:
                         for chunk in r.iter_content(chunk_size=8192):
@@ -94,7 +94,7 @@ def run_evaluation(metafile, goldpath, gold_language="Greek", goldtype="similari
 
 # - - sēmita ad data - - #
 
-metafile = os.path.join(os.getcwd(), "Modell_Tabelle.csv")
+metafile = os.path.join(os.getcwd(), "Modell_Tabelle_Kopie.csv")
 # AGREE
 goldpath = os.path.join(os.getcwd(), "data/2_agree_task2.json")
 # syn-selection-benchmark-Latin.tsv

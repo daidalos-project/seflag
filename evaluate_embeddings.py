@@ -39,7 +39,7 @@ def evaluate_grc_embeddings(model, goldpath):
         writer = csv.writer(f)
         writer.writerows(grc_pairs_and_scores_list)
 
-    print("Similitūdō cosinūs, summum vocabulum, decem summa vocabula computō.\n(anglicē:Computing cosine similarity, top 1 and top 10 most similar words.)")
+    print("Similitūdō cosinūs, summum vocabulum, decem summa vocabula computō.\n(anglicē: Computing cosine similarity, top 1 and top 10 most similar words.)")
 
     is_evaluable_counter = 0
     is_not_evaluable_counter = 0
@@ -47,7 +47,7 @@ def evaluate_grc_embeddings(model, goldpath):
     gold_scores_list = []
     cos_similarity_list = []
     top1_hits = 0
-    top10_hits = 0 
+    top10_hits = 0
 
     for entry in gold_data:   
         
@@ -59,6 +59,7 @@ def evaluate_grc_embeddings(model, goldpath):
         score = entry["score"]
         
         # Check if words are in model vocab
+        # update evalubale word count for inspection 
         if w1 not in model.wv:
             is_not_evaluable_counter += 1
             print(f"{w1} in {entry} not in model vocab")
