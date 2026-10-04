@@ -15,21 +15,23 @@ la_nlp = spacy.load('la_core_web_lg')
 # grc_nlp = spacy.load('MODEL')
 
 # Evaluation #
-from spacy.scorer import Scorer
-from spacy.training import Example
 from spacy.tokens import Doc
+from spacy.training import Example
+from spacy.scorer import Scorer
+import pandas as pd
+from tabulate import tabulate
 
 '''SET UP PATHS'''
 
 #cwd
 cwd = Path.cwd()
 
-# conllu data (UD Treebanks v2.15) is stored in:
+# conllu data is stored in:
 conllu_data_dir = cwd / "data/conllu_data"
 la_files = list(conllu_data_dir.glob("la*.conllu"))
 grc_files = list(conllu_data_dir.glob("grc*.conllu"))
 
-# goldstandard will be saved to:
+# goldstandard will be stored in:
 la_gstd_path = cwd / "gold_standards/la_gstd.conllu"
 grc_gstd_path = cwd / "gold_standards/grc_gstd.conllu"
 
@@ -41,23 +43,6 @@ grc_gstd_path = cwd / "gold_standards/grc_gstd.conllu"
     with open(la_gstd_path, 'a+', encoding='utf-8') as f:
         conllu.write_corpus(sentences, f) """
 
-la_corpus = conllu.load_from_file(la_gstd_path)
-
-la_gold_forms = []
-la_gold_deps = []
-la_gold_heads = []
-
-for sent in la_corpus:
-    for token in sent.tokens:
-        if token.is_multiword() == True:
-            continue
-        else:
-            la_gold_forms.append(token.form)
-            la_gold_deps.append(token.deprel)
-            la_gold_heads.append(token.head)
-
-la_gold_heads = [int(head) for head in la_gold_heads]
-
 """ for file in grc_files:
     filename = os.path.join(conllu_data_path, file)
     sentences = conllu.load_from_file(filename)
@@ -68,60 +53,42 @@ la_gold_heads = [int(head) for head in la_gold_heads]
 
 # grc_corpus = conllu.load_from_file(grc_gstd_path)
 
-'''NORMALIZE GOLD STANDARD'''
+def evaluate_spacy(corpus_path, nlp):
+    corpus = conllu.load_from_file(corpus_path)
+    examples = []
 
-la_gold_forms = [form.replace("v", "u") for form in la_gold_forms]
-la_gold_forms = [form.replace("V", "U") for form in la_gold_forms]
+    for sent in corpus:
+        tokens = [token for token in sent.tokens if not token.is_multiword()]
+        forms = [token.form for token in tokens]
+        forms = [f.replace("v", "u").replace("V", "U") for f in forms]
+        deps = [token.deprel for token in tokens]
+        conllu_heads = [int(token.head) for token in tokens]
 
-'''SET UP ANNOTATION FUNCTIONS'''
+        # Head conversion
+        spacy_heads = []
+        for i, ch in enumerate(conllu_heads):
+            if ch == 0:
+                spacy_heads.append(i)
+            else:
+                spacy_heads.append(ch - 1)
+        
+        doc = Doc(nlp.vocab, words=forms)
+        doc = nlp(doc)
 
-""" def annotate_latin_texts(text: str):
-    pred_text = []
-    pred_deps = []
-    doc = la_nlp(text)
-    for token in doc:
-        pred_text.append(token.text)
-        pred_deps.append(token.dep_)
-    return pred_text, pred_deps """
+        ref = Doc(nlp.vocab, words=forms, heads=spacy_heads, deps=deps)
 
-def annotate_latin_tokens(tokens: list[str]):
-    pred_text = []
-    pred_deps = []
-    pred_heads = []
-    nlp = spacy.load("la_core_web_lg")
-    doc = Doc(nlp.vocab, words=tokens)
-    doc = nlp(doc)
-    for token in doc:
-        pred_text.append(token.text)
-        pred_deps.append(token.dep_)
-        pred_heads.append(token.head.i)
-    return pred_text, pred_deps, pred_heads
+        examples.append(Example(doc, ref))
 
-'''SET UP TEXT'''
+    return examples
 
-# sentences
+examples = evaluate_spacy(la_gstd_path, la_nlp)
 
-# for sentence in la_corpus:
-#    text = sentence.meta['text']
-#    sentences.append(text)
+score = Scorer(la_nlp).score(examples)
 
-# string_for_annotation = " ".join(sentences)
+df = pd.json_normalize(score).T # .T transposes dataframe
+df.columns = ["score"]
 
-'''RUN ANNOTATION'''
+table = tabulate(df, headers="keys", tablefmt="pipe")
 
-pred_text, pred_deps, pred_heads = annotate_latin_tokens(la_gold_forms)
-
-'''RUN EVALUATION'''
-
-predicted = Doc(la_nlp.vocab, words=pred_text, heads=pred_heads, deps=pred_deps)
-reference = Doc(la_nlp.vocab, words=la_gold_forms, heads=la_gold_heads, deps=la_gold_deps)
-
-ex_obj = []
-
-ex_obj.append(Example(predicted, reference))
-
-scorer = Scorer(la_nlp)
-
-scores = scorer.score(ex_obj)
-
-print(scores["dep_uas"], scores["dep_las"])
+with open("table.md", "w") as file:
+    file.write(table)
