@@ -1,11 +1,12 @@
 import os
+from pathlib import Path
 import csv
 import requests
 import gensim
 from gensim.models import KeyedVectors
 from gensim.test.utils import datapath
 import pandas as pd
-from evaluate_embeddings import evaluate_grc_embeddings, evaluate_lat_embeddings
+from seflag.embeddings_evaluation_functions import evaluate_grc_embeddings, evaluate_lat_embeddings
 
 def run_evaluation(metafile, goldpath, gold_language="Greek", goldtype="similarity", file_ending=".bin", model_type="fasttext"):  
     results = []
@@ -76,27 +77,23 @@ def run_evaluation(metafile, goldpath, gold_language="Greek", goldtype="similari
                             })
     df = pd.DataFrame(results)
     print(df)
-    saving_path = os.getcwd()
-    results_path = os.path.join(saving_path, "evaluation_results_1.csv")
-    result_run_nr = 1
-    if os.path.exists(results_path):
-        result_paths = [path for path in os.listdir(saving_path) if os.path.basename(path).startswith("evaluation_results_")]
-        version_nrs = []
-        for result_path in result_paths:
-            version_nr = result_path[-5]
-            version_nrs.append(version_nr)
-        result_run_nr = int(max(version_nrs)) + 1
-        results_path = os.path.join(saving_path, f"evaluation_results_{result_run_nr}.csv")
-        df.to_csv(results_path, index=False)
-    else:
-        df.to_csv("evaluation_results_1.csv", index=False)
+    saving_path = Path.cwd()
+    version_nrs = [
+        int(p.stem.split("_")[-1])
+        for p in saving_path.glob("evaluation_results_*.csv")
+        if p.stem.split("_")[-1].isdigit()
+        ]
+
+    results_path = saving_path / f"evaluation_results_{max(version_nrs, default=0) + 1}.csv"
+    df.to_csv(results_path, index=False)
+
     print("Done.")
 
 # - - sēmita ad data - - #
 
-metafile = os.path.join(os.getcwd(), "Modell_Tabelle_Kopie.csv")
+metafile = Path.cwd() / "word_embeddings_models" / "model_table.csv"
 # AGREE
-goldpath = os.path.join(os.getcwd(), "data/2_agree_task2.json")
+goldpath = Path.cwd() / "data" / "2_agree_task2.json"
 # syn-selection-benchmark-Latin.tsv
 # goldpath = os.path.join(os.getcwd(), "data/word-embeddings-dicts/syn-selection-benchmark-Latin.tsv")
 
