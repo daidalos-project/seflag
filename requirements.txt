@@ -150,6 +150,7 @@ pydantic_core==2.18.2
 Pygments==2.17.2
 pygtrie==2.5.0
 pyparsing==3.1.2
+pypdf==6.9.1
 PySocks==1.7.1
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1

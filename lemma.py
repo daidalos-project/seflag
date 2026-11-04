@@ -15,6 +15,7 @@ from models import Models
 
 # need this for greCy to work properly
 Doc.set_extension("trf_data", default=None)
+
 beta_to_uni: dict[str, str] = dict()
 uni_to_beta: dict[str, str] = dict()
 
