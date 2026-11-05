@@ -1,4 +1,4 @@
-'''IMPORT NEEDED MODULES'''
+'''IMPORT NEEDED MODULES''' 
 
 # Path handling #
 import os
@@ -10,7 +10,6 @@ import tqdm as tqdm
 import json
 import csv
 
-
 def evaluate_grc_embeddings(model, goldpath):
     '''EVALUATION'''
     print("Exāmināre incipiō.")
@@ -19,8 +18,7 @@ def evaluate_grc_embeddings(model, goldpath):
     with open(goldpath, 'r') as file:
         gold_data = json.load(file)["pairs"]
 
-    print(
-        "Imprimō īnspectiōnis causā mēnsūrae comparātiōnis fragmentum prīmum.\n(anglicē: Printing first entry in gold_data for inspection.)")
+    print("Imprimō īnspectiōnis causā mēnsūrae comparātiōnis fragmentum prīmum.\n(anglicē: Printing first entry in gold_data for inspection.)")
     print(gold_data[:1])
 
     print("Mēnsūra comparātiōnis in virgulā intercīsam fōrmam vertō.\n(anglicē: Setting up gold standard .csv file.)")
@@ -28,21 +26,20 @@ def evaluate_grc_embeddings(model, goldpath):
     grc_pairs_and_scores_list = []
 
     for entry in gold_data:
-        removed_comma = entry["pair"].replace(",", "")
+        removed_comma = entry["pair"].replace(",","")
         pair = removed_comma.strip().split()
         w1 = pair[0]
         w2 = pair[1]
         score = entry["score"]
-        grc_pairs_and_scores_list.append([w1, w2, score])
+        grc_pairs_and_scores_list.append([w1,w2,score])
 
     csv_file_path = os.path.join(os.getcwd(), "data/word-embeddings-dicts/AGREE/similarity_scores.csv")
-    os.makedirs(os.path.dirname(csv_file_path), exist_ok=True)
-    with open(csv_file_path, "w+", encoding="utf8") as f:
+
+    with open(csv_file_path, "w", encoding="utf8") as f:
         writer = csv.writer(f)
         writer.writerows(grc_pairs_and_scores_list)
 
-    print(
-        "Similitūdō cosinūs, summum vocabulum, decem summa vocabula computō.\n(anglicē:Computing cosine similarity, top 1 and top 10 most similar words.)")
+    print("Similitūdō cosinūs, summum vocabulum, decem summa vocabula computō.\n(anglicē: Computing cosine similarity, top 1 and top 10 most similar words.)")
 
     is_evaluable_counter = 0
     is_not_evaluable_counter = 0
@@ -52,21 +49,22 @@ def evaluate_grc_embeddings(model, goldpath):
     top1_hits = 0
     top10_hits = 0
 
-    for entry in gold_data:
-
+    for entry in gold_data:   
+        
         # Prepare word pairs
-        removed_comma = entry["pair"].replace(",", "")
+        removed_comma = entry["pair"].replace(",","")
         pair = removed_comma.strip().split()
         w1 = pair[0]
         w2 = pair[1]
         score = entry["score"]
-
+        
         # Check if words are in model vocab
+        # update evalubale word count for inspection 
         if w1 not in model.wv:
             is_not_evaluable_counter += 1
             print(f"{w1} in {entry} not in model vocab")
             continue
-        if w2 not in model.wv:
+        if  w2 not in model.wv:
             is_not_evaluable_counter += 1
             print(f"{w2} in {entry} not in model vocab")
             continue
@@ -82,11 +80,11 @@ def evaluate_grc_embeddings(model, goldpath):
 
             # Compute top 1 most similar word
             top_1 = model.wv.most_similar(positive=w1, topn=1)[0][0]
-            # returns list of tupels for each of the topn words.
-            # We need only the word, i.e. the first element of the first tupel in the list.
+                    # returns list of tupels for each of the topn words. 
+                    # We need only the word, i.e. the first element of the first tupel in the list.
             if top_1 == w2:
                 top1_hits += 1
-
+        
             # Compute top 10 most similar word
             top_10_list = []
             top_10 = model.wv.most_similar(positive=w1, topn=10)
@@ -103,8 +101,8 @@ def evaluate_grc_embeddings(model, goldpath):
 
     return pearson, spearman, oov_ratio, top_1_accuracy, top_10_recall
 
-
 def evaluate_lat_embeddings(model, goldpath):
+        
     '''EVALUATION'''
 
     print("Exāmināre incipiō.")
@@ -117,34 +115,32 @@ def evaluate_lat_embeddings(model, goldpath):
         for row in tsv_reader:
             gold_data.append(row)
 
-    print(
-        "Imprimō īnspectiōnis causā mēnsūrae comparātiōnis fragmentum prīmum.\n(anglicē: Printing first entry in gold_data for inspection.)")
+    print("Imprimō īnspectiōnis causā mēnsūrae comparātiōnis fragmentum prīmum.\n(anglicē: Printing first entry in gold_data for inspection.)")
 
     print(gold_data[0])
 
-    print(
-        "Similitūdō cosinūs, summum vocabulum, decem summa vocabula computō.\n(anglicē:Computing cosine similarity, top 1 and top 10 most similar words.)")
+    print("Similitūdō cosinūs, summum vocabulum, decem summa vocabula computō.\n(anglicē:Computing cosine similarity, top 1 and top 10 most similar words.)")
 
     is_evaluable_counter = 0
     is_not_evaluable_counter = 0
 
     syn_higher_than_distr_counter = 0
     top1_hits = 0
-    top10_hits = 0
+    top10_hits = 0 
 
-    for entry in gold_data:
-
+    for entry in gold_data:   
+        
         # Prepare word pairs
         w1 = entry[0]
         w2 = entry[1]
         distractors = entry[2:]
-
+        
         # Check if words are in model vocab
         if w1 not in model.wv:
             is_not_evaluable_counter += 1
             print(f"{w1} in {entry} not in model vocab")
             continue
-        if w2 not in model.wv:
+        if  w2 not in model.wv:
             is_not_evaluable_counter += 1
             print(f"{w2} in {entry} not in model vocab")
             continue
@@ -152,21 +148,21 @@ def evaluate_lat_embeddings(model, goldpath):
             is_evaluable_counter += 1
 
             # Compute distractor ranking
-            syn_similarity = model.wv.similarity(w1, w2)
+            syn_similarity = model.wv.similarity(w1,w2)
             distractor_sims = []
             for d in distractors:
                 if d in model.wv:
                     distractor_sims.append(model.wv.similarity(w1, d))
             if all(syn_similarity > ds for ds in distractor_sims):
                 syn_higher_than_distr_counter += 1
-
+            
             # Compute top 1 most similar word
             top_1 = model.wv.most_similar(positive=w1, topn=1)[0][0]
-            # returns list of tupels for each of the topn words.
-            # We need only the word, i.e. the first element of the first tupel in the list.
+                    # returns list of tupels for each of the topn words. 
+                    # We need only the word, i.e. the first element of the first tupel in the list.
             if top_1 == w2:
                 top1_hits += 1
-
+        
             # Compute top 10 most similar word
             top_10_list = []
             top_10 = model.wv.most_similar(positive=w1, topn=10)
@@ -174,7 +170,7 @@ def evaluate_lat_embeddings(model, goldpath):
                 top_10_list.append(x[0])
             if w2 in top_10_list:
                 top10_hits += 1
-
+    
     evaluated_pairs = is_evaluable_counter / (is_evaluable_counter + is_not_evaluable_counter)
     top_1_accuracy = top1_hits / is_evaluable_counter
     top_10_recall = top10_hits / is_evaluable_counter
