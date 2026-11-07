@@ -1,0 +1,276 @@
+{
+    "title": "data sheet for ancient language datasets",
+    "content": [
+        {"section": "Contents of the data sheet", "text": "The template for **Data Sheets for Ancient Language Datasets** is based on the proposal by Gebru et al. 2021 (see https://arxiv.org/abs/1803.09010). The majority of questions is taken from there. However, as some questions are not relevant for historical data, they have been left out. On the other hand, questions which are of relevance for Humanities scholars researching ancient languages have been added. The question have been answered to the best of their knowledge by Daidalos Team. Sources for the information provided in the data sheet are listed in the bibliography section at the end of this document.\n\nAll links in this document have last been checked in Sept. 2025."},
+        {"section": "Abbreviations", "text": "Perseus = Latin Dependency Treebank , UD Latin Perseus\nPROIEL = Pragmatic Resources of Old Indo-European Languages, UD Latin PROIEL\nSEFLAG = Systematic Evaluation Framework for natural language processing models and datasets in Latin and Ancient Greek\nUD = Universal Dependencies\nUDante = UDante Treebank, UD Latin UDante\nCIRCSE = CIRCSE Treebank, UD Latin CIRCSE\nLLCT = Late Latin Charter Treebank, UD Latin LLCT\nITTB = Index Thomisticus Treebank, UD Latin ITTB"},
+        {"section": "Dataset Name", "text": "grc_ud_test_dataset_for_use_of_SEFLAG"},
+        {"section": "Part I: Dataset Creation and Content", "content": [
+            {"section": "Dataset Creation and Content (technical)", "content": [
+                {"question_number": 1, 
+                    "text": "For what purpose was the dataset created? Was there a specific task in mind? Was there a specific gap that needed to be filled? Please provide a description.", 
+                    "answer": "The dataset consists the test splits of all latin treebanks part of version 2.15 of the Universal Dependencies Project (see below), namely: The dataset was created to serve as a goldstandard for the evaluation of classical language NLP tools as part of SEFLAG. The original goals of the UD treebanks (abridged from https://universaldependencies.org/introduction.html#introduction (as of Sept. 2025)): The Universal Dependencies (UD) treebanks were created to facilitate multilingual syntactic analysis and parsing by providing a standardized framework for dependency structures across languages. The goal was to support a broad range of tasks such as natural language understanding, machine translation, and cross-lingual studies, while addressing the lack of consistent linguistic annotations across diverse languages. 'The annotation scheme is based on an evolution of (universal) Stanford dependencies (de Marneffe et al., 2006, 2008, 2014), Google universal part-of-speech tags (Petrov et al., 2012), and the Interset interlingua for morphosyntactic tagsets (Zeman, 2008).' https://universaldependencies.org/introduction.html#introduction \n CIRCSE: CIRCSE Research Centre in Milan \n UDante:"
+                },
+                {"question_number": 2, 
+                    "text": "2. Who created the dataset (e.g., which team, research group) and on behalf of which entity (e.g., company, institution, organization)?", 
+                    "answer": "latin_treebanks_ud_test was compiled out of existing treebanks by the Daidalos team\nsee: https://daidalos-projekt.de/\nthe UD data was created by different researchgroup for each treebank (see below).\nUD main coordinator: Joakim Nivre, see https://universaldependencies.org/introduction.html#project-organization (Sept. 2025)\nthe Perseus data was created by Tufts and Leipzig Universities, main contributers: Giuseppe G. A. Celano, Gregory Crane, Bridget Almas & al., see http://perseusdl.github.io/treebank_data/ (Sept. 2025)\nUD conversion by Giuseppe G. A. Celano, see https://universaldependencies.org/treebanks/la_perseus/index.html#acknowledgments (contributers also listed there) (Sept. 2025)\noriginal project: Bamman, David und Crane, Gregory R. 2011. ‚‚The Ancient Greek and Latin Dependency Treebanks‘‘. In: Sporleder, Caroline und van den Bosch, Aantal u. Zervanou, Kalliopi (Hrsg.). Language Technology for Cultural Heritage. Berlin/Heidelberg. Theory and Applications of Natural Language Processing.\nPROIEL: citation: Dag T. T. Haug and Marius L. Jøhndal. 2008. 'Creating a Parallel Treebank of the Old Indo-European Bible Translations'. In Caroline Sporleder and Kiril Ribarov (eds.). Proceedings of the Second Workshop on Language Technology for Cultural Heritage Data (LaTeCH 2008) (2008), pp. 27-34.\n official website: https://dev.syntacticus.org (Sept. 2025)\nUD conversion by Dag Haug, see: https://universaldependencies.org/treebanks/la_proiel/index.html#acknowledgments \nCIRCSE: https://universaldependencies.org/treebanks/la_circse/index.html#description \nCIRCSE Research Centre in Milan (https://centridiricerca.unicatt.it/circse/en.html)\n'The annotation of Seneca Hercules Furens and Agamemnon has been conducted in the framework of the LiLa: Linking Latin project. LiLa has received funding from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation programme – Grant Agreement No. 769994. Warmful thanks to Federica Gamba and Flavio Massimiliano Cecchini for their support and precious advices during the annotation process.' (https://universaldependencies.org/treebanks/la_circse/index.html#acknowledgments 29.09.2025)\n UDante: 'The syntactic annotation of the UDante treebank has been created through a manual annotation process performed in the context of a collaboration between the University of Pisa (responsible: Mirko Tavoni) and the LiLa: Linking Latin project at the Università Cattolica del Sacro Cuore, Milan, Italy (PI: Marco Passarotti). The annotation process was co-ordinated by Flavio Massimiliano Cecchini, Giovanni Moretti and Rachele Sprugnoli (all based at the Università Cattolica del Sacro Cuore).' (https://universaldependencies.org/treebanks/la_udante/index.html#description, 29.09.2025)\nLLCT: 'The conversion of the LLCT2 into the Universal Dependencies was realized by Flavio Massimiliano Cecchini and Marco Passarotti within the LiLa project (Linking Latin, https://lila-erc.eu/). The original LLCT2 was annotated by Timo Korkiakangas under projects funded by the University of Oslo and the Academy of Finland.' (https://universaldependencies.org/treebanks/la_llct/index.html 29.09.2025)\nsee also: Korkiakangas, T. 2021. 'Late Latin Charter Treebank: contents and annotation'. In: Corpora. Vol.16, No.2, S. 191--203.s\nITTB: Founded 1949 by Roberto Busa. The Index Thomisticus is edited by the CIRCSE Research Center in Milan. see: Passarotti, Marco. 2019. 'The Index Thomisticus Treebank Project.' In: Berti, Monica (ed.): Digital Classical Philology: Ancient Greek and Latin in the Digital Revolution. Berlin/Boston. pp. 299–320. Online: https://doi.org/10.1515/9783110599572-017 18.12.2024. The treebank available on the UD website is a conversion from the original treebank, see Passarotti et al. (2018).\nsee aslo: https://universaldependencies.org/treebanks/la_ittb/index.html#acknowledgments"
+                },
+                {"question_number": 3, 
+                    "text": "Who funded the creation of the dataset? If there is an associated grant, please provide the name of the grantor and the grant name and number.", 
+                    "answer": "Daidalos project funded by DFG\n'UD is an open collaboration with many project members.' https://universaldependencies.org/introduction.html#project-organization, refer to the linked site for further information\nPerseus funded by\nPROIEL funded by\nCIRCSE funded by\nUDante funded by\n'The LiLa project has received funding from the European Research Council (ERC) under the European Union's Horizon 2020 research and innovation programme -- Grant Agreement No. 769994.' (https://universaldependencies.org/treebanks/la_udante/index.html#acknowledgments 29.09.2025)\nLLCT funded by"
+                },
+                {"question_number": 4, 
+                    "text": "What do the instances that comprise the dataset represent (e.g., documents, photos, people, countries)? Are there multiple types of instances (e.g., movies, users, and ratings; people and interactions between them; nodes and edges)? Please provide a description.", 
+                    "answer": "The dataset consists of syntactically annotated sentences from a wide variety of languages. Each instance represents a sentence broken down into individual tokens (words or morphemes) with syntactic dependencies between them. The contents of the UD treebanks are themselves samples from the corpus of the surviving latin language material. See also section IV for more details on the content."
+                },
+                {"question_number": 5, 
+                    "text": "How many instances are there in total (of each type, if appropriate)?", 
+                    "answer": "Sentences:\nTokens:"
+                },
+                {"question_number": 6, 
+                    "text": "Does the dataset contain all possible instances or is it a sample (not necessarily random) of instances from a larger set? If the dataset is a sample, then what is the larger set? Is the sample representative of the larger set (e.g., geographic coverage)? If so, please describe how.", 
+                    "answer": "The data used in the grc_ud_test_dataset_for_use_of_SEFLAG comprises the test splits of the Universal Dependencies Treebanks for Latin and thus represent a sample of the full data available at UD. Train and dev splits are also available at the UD website for each treebank (refer to the treebank hub pages linked above)."
+                },
+                {"question_number": 7, 
+                    "text": "What data does each instance consist of? “Raw” data (e.g., unprocessed text or images) or features? In either case, please provide a description.", 
+                    "answer": "Treebanks are stored as plain text files encoded with UTF-8 in the .conllu format (see: https://universaldependencies.org/format.html). Each file contains a number of sentences in tokenized form with linguistic annotations"
+                },
+                {"question_number": 8, 
+                    "text": "Is there a label or target associated with each instance? If so, please provide a description.", 
+                    "answer": "There are multiple labels associated with each instance conveying a range of linguistic as well as meta information for each sentence and each token inside a sentence. Refer to the UD guidelines and the treebank specific sites linked above."
+                },
+                {"question_number": 9, 
+                    "text": "Is any information missing from individual instances? If so, please provide a description, explaining why this information is missing (e.g., because it was unavailable). This does not include intentionally removed information, but might include, e.g., redacted text.", 
+                    "answer": "No information is missing from the instances, but not all annotations possible in the UD annotation scheme have been made (e.g. the treebanks usually do not contain Enhanced Dependencies). Additionally, not all fields existing in the UD annotation format have been filled for every token because not all tokens require every field.\nAll Treebanks follow slightly different interpretations of UD or are the result of automatic conversions, which do not result in 100% matching annotation styles between the treebanks. See also:     Federica Gamba and Daniel Zeman. 2023. Universalising Latin Universal Dependencies: a harmonisation of Latin treebanks in UD. In Proceedings of the Sixth Workshop on Universal Dependencies (UDW, GURT/SyntaxFest 2023), pages 7–16, Washington, D.C.. Association for Computational Linguistics."
+                },
+                {"question_number": 10, 
+                    "text": "Are relationships between individual instances made explicit (e.g., users’ movie ratings, social network links)? If so, please describe how these relationships are made explicit.", 
+                    "answer": "Each sentence is assigned an ID  which marks its position in the whole corpus\nEach token inside a sentence is assigned a syntactic dependency relationship with it's head word."
+                },
+                {"question_number": 11, 
+                    "text": "Are there recommended data splits (e.g., training, development/validation, testing)? If so, please provide a description of these splits, explaining the rationale behind them.", 
+                    "answer": "Test, dev and train splits can be created via hugging face datasets as for any other dataset. However, keep in mind, that the dataset was compiled with the goal to serve as a gold standard for testing NLP tools"
+                },
+                {"question_number": 12, 
+                    "text": "Are there any errors, sources of noise, or redundancies in the dataset? If so, please provide a description.", 
+                    "answer": "The data consists of natural text sources transmitted through history. As such it may contain naturally occurring redundancies, inconcistencies and biases."
+                },
+                {"question_number": 13, 
+                    "text": "Is the dataset self-contained, or does it link to or otherwise rely on external resources (e.g., websites, tweets, other datasets)?", 
+                    "answer": [{"text": "The dataset is self-contained"}, {"subquestion": "If it links to or relies on external resources:", "content": [
+                        {"question_number": "13a", 
+                            "text": "are there guarantees that they will exist, and remain constant, over time;",
+                            "answer": ""
+                        },
+                        {"question_number": "13b", 
+                            "text": "are there official archival versions of the complete dataset (i.e., including the external resources as they existed at the time the dataset was created);",
+                            "answer": ""
+                        },
+                        {"question_number": "13c", 
+                            "text": "are there any restrictions (e.g., licenses, fees) associated with any of the external resources that might apply to a dataset consumer? Please provide descriptions of all external resources and any restrictions associated with them, as well as links or other access points, as appropriate.",
+                            "answer": ""
+                        }
+                    ]}
+                ]
+                },
+                {"question_number": 14, 
+                    "text": "What mechanisms or procedures were used to collect the data (e.g., hardware apparatuses or sensors, manual human curation, software programs, software APIs)? How were these mechanisms or procedures validated?", 
+                    "answer": "manual human curation"
+                },
+                {"question_number": 15, 
+                    "text": "If the dataset is a sample from a larger set, what was the sampling strategy (e.g., deterministic, probabilistic with specific sampling probabilities)?", 
+                    "answer": "The dataset was compiled with the goal to serve as a gold standard for testing NLP tools. The data consists of natural text sources transmitted through history. As such it may contain naturally occurring redundancies, inconcistencies and biases. This applies to historical data in general. Appart from this, the sampling strategies used creating this specific data set are: ..."
+                },
+                {"question_number": 16, 
+                    "text": "Over what timeframe was the data collected? Does this timeframe match the creation timeframe of the data associated with the instances (e.g., recent crawl of old news articles)?",
+                    "answer": [{"text": ""}, {"subquestion": "If not,", "content": [
+                        {"question_number": "16a", 
+                        "text": "please describe the timeframe in which the data associated with the instances was created.",
+                        "answer": "The data consists of publicly available texts and text available in scholarly editions."
+                    }
+                    ]}]
+                },
+                {"question_number": 17, 
+                    "text": "How was the data associated with each instance acquired? Was the data directly observable (e.g., raw text, movie ratings), reported by subjects (e.g., survey responses), or indirectly inferred/derived from other data (e.g., part-of-speech tags, model-based guesses for age or language)?", 
+                    "answer": ""
+                }
+            ]},
+            {"section": "Dataset Creation and Content (legal, ethical)", "content": [
+                {"question_number": 18, 
+                    "text": "Were any ethical review processes conducted (e.g., by an institutional review board)? If so, please provide a description of these review processes, including the outcomes, as well as a link or other access point to any supporting documentation.", 
+                    "answer": "SEFLAG dataset: no\nOriginal Treebanks: unknown to the authors of this datasheet"
+                },
+                {"question_number": 19, 
+                    "text": "Who was involved in the data collection process (e.g., students, crowdworkers, contractors) and how were they compensated (e.g., how much were crowdworkers paid)?", 
+                    "answer": "SEFLAG dataset: research assistant and student assistant paid by project fund\nregarding contributers to Perseus see: https://perseusdl.github.io/treebank_data/, https://universaldependencies.org/treebanks/la_perseus/index.html#acknowledgments (09.2025). The annotators of every sentence are indicated in the .xml files of the original AGDT project. This information is not part of the UD annotations.\nregarding contributers to PROIEL see: https://dev.syntacticus.org/, https://dev.syntacticus.org/proiel.html#citing (09.2025)\nregarding contributers to ITTB: https://universaldependencies.org/treebanks/la_ittb/index.html#acknowledgments\nregarding contributers to CIRCSE: https://universaldependencies.org/treebanks/la_circse/index.html#acknowledgments\nregarding contributers to UDante: https://universaldependencies.org/treebanks/la_udante/index.html#acknowledgments\nregarding contributers to LLCT: https://universaldependencies.org/treebanks/la_llct/index.html#acknowledgments"
+                },
+                {"question_number": 20, 
+                    "text": "Does the dataset contain data that might be considered confidential (e.g., data that is protected by legal privilege or by doctor–patient confidentiality, data that includes the content of individuals’ non-public communications)? If so, please provide a description.", 
+                    "answer": "No, the dataset only contains annotations"
+                },
+                {"question_number": 21, 
+                    "text": "Does the dataset contain data that, if viewed directly, might be offensive, insulting, threatening, or might otherwise cause anxiety? If so, please describe why. If the dataset does not relate to people, you may skip the remaining questions in this section.", 
+                    "answer": "not applicable"
+                },
+                {"question_number": 22, 
+                    "text": "Does the dataset identify any subpopulations (e.g., by age, gender)? If so, please describe how these subpopulations are identified and provide a description of their respective distributions within the dataset.", 
+                    "answer": "A number of ethnic groups of antiquity are referred to."
+                },
+                {"question_number": 23, 
+                    "text": "Is it possible to identify individuals (i.e., one or more natural persons), either directly or indirectly (i.e., in combination with other data) from the dataset? If so, please describe how.", 
+                    "answer": "Only historical individuals."
+                },
+                {"question_number": 24, 
+                    "text": "Does the dataset contain data that might be considered sensitive in any way (e.g., data that reveals race or ethnic origins, sexual orientations, religious beliefs, political opinions or union memberships, or locations; financial or health data; biometric or genetic data; forms of government identification, such as social security numbers; criminal history)? If so, please provide a description.", 
+                    "answer": "Only historical individuals."
+                    },
+                {"question_number": 25, 
+                    "text": "If the data was reported by subjects or indirectly inferred/derived from other data, was the data validated/verified? If so, please describe how.", 
+                    "answer": "not applicable"
+                },
+                {"question_number": 26, 
+                    "text": "Did you collect the data from the individuals in question directly, or obtain it via third parties or other sources (e.g., websites)? Were the individuals in question notified about the data collection? If so, please describe (or show with screenshots or other information) how notice was provided, and provide a link or other access point to, or otherwise reproduce, the exact language of the notification itself.", 
+                    "answer": "not applicable"
+                },
+                {"question_number": 27, 
+                    "text": "Did the individuals in question consent to the collection and use of their data? If so, please describe (or show with screenshots or other information) how consent was requested and provided, and provide a link or other access point to, or otherwise reproduce, the exact language to which the individuals consented.", 
+                    "answer": "not applicable"
+                },
+                {"question_number": 28, 
+                    "text": "If consent was obtained, were the consenting individuals provided with a mechanism to revoke their consent in the future or for certain uses? If so, please provide a description, as well as a link or other access point to the mechanism (if appropriate).", 
+                    "answer": "not applicable"
+                },
+                {"question_number": 29, 
+                    "text": "Has an analysis of the potential impact of the dataset and its use on data subjects (e.g., a data protection impact analysis) been conducted? If so, please provide a description of this analysis, including the outcomes, as well as a link or other access point to any supporting documentation.", 
+                    "answer": "not applicable"
+                },
+                {"comment": "Further comments", "answer": ""}
+            ]}
+        ]},
+        {"section": "Part II: Technical", "content": [
+            {"section": "Preprocessing/cleaning/labeling", "content": [
+                {"question_number": 30, 
+                    "text": "Was any preprocessing/cleaning/labeling of the data done (e.g., discretization or bucketing, tokenization, part-of-speech tagging, SIFT feature extraction, removal of instances, processing of missing values)? If so, please provide a description. If not, you may skip the remainder of the questions in this section.", 
+                    "answer": "- A range of preprocessing steps (such as normalisation, tokenization, lemmatisation) has been conducted in the process of the original annotation for each UD Treebank contained in this dataset. All instances are labeled/linguistically annotated.\nFor the latin_ud_test dataset no further preprocessing has been done."
+                },
+                {"question_number": 31, 
+                    "text": "Was the “raw” data saved in addition to the preprocessed/cleaned/labeled data (e.g., to support unanticipated future uses)? If so, please provide a link or other access point to the “raw” data.", 
+                    "answer": "Raw data are independently and freely available\nAs part of the UD annotation scheme ech sentence in the .conllu files contains a plain text string containing the full text of the sentence (based on the scholarly editions the sentence was taken from)."
+                },
+                {"comment": "Further comments", "answer": ""}
+            ]},
+            {"section": "Distribution", "content": [
+                {"question_number": 32, 
+                    "text": "Will the dataset be distributed to third parties outside of the entity (e.g., company, institution, organization) on behalf of which the dataset was created? If so, please provide a description.", 
+                    "answer": "- The latin_ud_test dataset is available on Huggingface at https://huggingface.co/daidalos-project\nThe original UD data is avaialble from the universal dependencies website: https://universaldependencies.org/#language-"
+                },
+                {"question_number": 33, 
+                    "text": "How will the dataset will be distributed (e.g., tarball on website, API, GitHub)?", 
+                    "answer": "Data will be avaialble at:"
+                },
+                {"question_number": 34, 
+                    "text": "Does the dataset have a digital object identifier (DOI)?", 
+                    "answer": ""
+                },
+                {"question_number": 35, 
+                    "text": "When will the dataset be distributed?", 
+                    "answer": "The dataset is already distributed."
+                },
+                {"question_number": 36, 
+                    "text": "Will the dataset be distributed under a copyright or other intellectual property (IP) license, and/or under applicable terms of use (ToU)? If so, please describe this license and/or ToU, and provide a link or other access point to, or otherwise reproduce, any relevant licensing terms or ToU, as well as any fees associated with these restrictions.", 
+                    "answer": "latin_ud_test: Creative Commons Zero v1.0\nITTB: CC BY-NC-SA 3.0 (https://universaldependencies.org/treebanks/la_ittb/index.html)\nnLLCT: CC BY-SA 4.0 (https://universaldependencies.org/treebanks/la_llct/index.html)\nPROIEL: CC BY-NC-SA 3.0 (https://universaldependencies.org/treebanks/la_proiel/index.html)\nUDANTE: CC BY-NC-SA 3.0 (https://universaldependencies.org/treebanks/la_udante/index.html)\nCIRCSE: CC BY-SA 4.0 (https://universaldependencies.org/treebanks/la_circse/index.html)\nPerseus: CC BY-NC-SA 2.5 (https://universaldependencies.org/treebanks/la_perseus/index.html)"
+                },
+                {"question_number": 37, 
+                    "text": "Have any third parties imposed IP-based or other restrictions on the data associated with the instances? If so, please describe these restrictions, and provide a link or other access point to, or otherwise reproduce, any relevant licensing terms, as well as any fees associated with these restrictions.", 
+                    "answer": "Unknown to the authors of this datasheet"
+                },
+                {"question_number": 38, 
+                    "text": "Do any export controls or other regulatory restrictions apply to the dataset or to individual instances? If so, please describe these restrictions, and provide a link or other access point to, or otherwise reproduce, any supporting documentation.", 
+                    "answer": "Unknown to the authors of this datasheet"
+                },
+                {"comment": "Further comments", "answer": ""}
+            ]},
+            {"section": "Maintenance", "content": [
+                {"question_number": 39, 
+                    "text": "Who will be supporting/hosting/maintaining the dataset?", 
+                    "answer": "The latin_ud_test dataset is maintained by the Daidalos Team: https://daidalos-projekt.de/contact/ \n The UD Treebanks are maintained by the UD team: https://universaldependencies.org/introduction.html#project-organization"
+                },
+                {"question_number": 40, 
+                    "text": "How can the owner/curator/manager of the dataset be contacted (e.g., email address)?", 
+                    "answer": "The latin_ud_test dataset is maintained by the Daidalos Team: https://daidalos-projekt.de/contact/ \n The UD Treebanks are maintained by the UD team: https://universaldependencies.org/introduction.html#project-organization"
+                },
+                {"question_number": 41, 
+                    "text": "Is there an erratum? If so, please provide a link or other access point. Will the dataset be updated (e.g., to correct labeling errors, add new instances, delete instances)? If so, please describe how often, by whom, and how updates will be communicated to dataset consumers (e.g., mailing list, GitHub)?", 
+                    "answer": "The latin_ud_test dataset might be expanded to include treebanks other than UD in the future\nAs UD is an ongoing project, the original UD Treebanks can potentially be modified, expanded or updated"
+                },
+                {"question_number": 42, 
+                    "text": "If the dataset relates to people, are there applicable limits on the retention of the data associated with the instances (e.g., were the individuals in question told that their data would be retained for a fixed period of time and then deleted)? If so, please describe these limits and explain how they will be enforced.", 
+                    "answer": "not applicable"
+                },
+                {"question_number": 43, 
+                    "text": "Will older versions of the dataset continue to be supported/hosted/maintained? If so, please describe how. If not, please describe how its obsolescence will be communicated to dataset consumers.", 
+                    "answer": "for this SEFLAG dataset: No\nthe distribution of the original UD data is maintained by the UD team (see above)"
+                },
+                {"question_number": 44, 
+                    "text": "If others want to extend/augment/build on/contribute to the dataset, is there a mechanism for them to do so? If so, please provide a description. Will these contributions be validated/verified?", 
+                    "answer": "For the SEFLAG dataset: No\nFor possible contribution to the original UD data refer to the UD website: https://universaldependencies.org/contributing/index.html"
+                },
+                {"comment": "Further comments", "answer": ""}
+            ]}
+        ]},
+        {"section": "Part III: Uses", "content": [
+            {"question_number": 45, 
+                "text": "Has the dataset been used for any tasks already? If so, please provide a description.",    
+                "answer": "historical linguistics research\nThe data can be used for any text based research (literature, history, anthropology, linguistcs, nlp)\nThe data can be used to train nlp tools\nThe dataset here provided has been used in the evaluation of NLP tools as part of SEFLAG"
+            },
+            {"question_number": 46, 
+                "text": "Is there a repository that links to any or all papers or systems that use the dataset? If so, please provide a link or other access point. What (other) tasks could the dataset be used for?", 
+                "answer": "The data set can be used for any text based research (literature, history, anthropology, linguistcs, nlp). The data can be used to train nlp tools."
+            },
+            {"question_number": 47, 
+                "text": "Is there anything about the composition of the dataset or the way it was collected and preprocessed/cleaned/labeled that might impact future uses? For example, is there anything that a dataset consumer might need to know to avoid uses that could result in unfair treatment of individuals or groups (e.g., stereotyping, quality of service issues) or other risks or harms (e.g., legal risks, financial harms)? If so, please provide a description. Is there anything a dataset consumer could do to mitigate these risks or harms?", 
+                "answer": "https://daidalos-projekt.de/resources/"
+            },
+            {"question_number": 48, 
+                "text": "Are there tasks for which the dataset should not be used? If so, please provide a description.", 
+                "answer": "Tasks not relying on written language"
+            },
+            {"comment": "Further comments", "answer": ""}
+        ]},
+        {"section": "Part IV: Content (non-technical)", "content": [
+            {"question_number": 49, 
+                "text": "Which language is represented in the dataset? Which period(s) in the history of the language do texts come from? Is the dataset multilingual (does it contain data of in more than one object language)?", 
+                "answer": "Language: Latin (lat)\nITTB: medieval\nLLCT: late latin / medieval\nPROIEL: classical (gold) and late latin (bible)\nUDANTE: medieval\nCIRCSE: classical (silver)\nPerseus: classical (gold), classical (silver), late latin"
+            },
+            {"question_number": 50, 
+                "text": "From which geographical region do the texts included in this dataset stem from?", 
+                "answer": "ITTB: Western Europe, Italy\nLLCT: Italy\nPROIEL: Italy, Bethlehem (Vulgata)\nUDANTE: Italy\nCIRCSE: Italy\nPerseus: Western Europe, Italy"
+            },
+            {"question_number": 51, 
+                "text": "What was the original medium of the text contained in this dataset (inscription, book, oral transmisson ...)?", 
+                "answer": "books"
+            },
+            {"question_number": 52, 
+                "text": "Which genres are covered by this dataset? Which topics are the texts about?",
+                "answer": "ITTB: theology\n'Latin data from the Index Thomisticus Treebank. Data are taken from the Index Thomisticus corpus by Roberto Busa SJ, which contains the complete work by Thomas Aquinas (1225--1274; Medieval Latin) and by 61 other authors related to Thomas.' (https://universaldependencies.org/treebanks/la_ittb/index.html#description 29.09.2025)\nLLCT: charters\n'The LLCT2 contains 521 Early Medieval Latin original documents (charters) written in Tuscia (Tuscany), Italy, between AD 774 and 897. They all represent the legal (documentary) genre. Their language is a non-standard variety of Latin which differs from Classical as well as from Medieval Latin in terms of spelling, morphology, and syntax.' (https://universaldependencies.org/treebanks/la_llct/index.html 29.09.2025)\nPROIEL: bible, letters, historiography, agriculture, politics\n'The Latin PROIEL treebank is based on the Latin data from the PROIEL treebank, and contains most of the Vulgate New Testament translations plus selections from Caesar's Gallic War, Cicero's Letters to Atticus, Palladius' Opus Agriculturae and the first book of Cicero's De officiis.' (https://universaldependencies.org/treebanks/la_proiel/index.html#description 28.09.2025)\nUDANTE: letters, philology, politics, poetry\n'De vulgari eloquentia: 13 873 syntactic words for 421 sentences over 2 books\nMonarchia: 23403 syntactic words for 682 sentences over 3 books\nLetters: 11 993 syntactic words for 376 sentences over 13 letters\nQuestio de aqua et terra: 5 243 syntactic words for 133 sentences\nEclogues: 2 730 syntactic words for 111 sentences over 4 eclogues' (https://universaldependencies.org/treebanks/la_udante/index.html#description 29.09.2025)\nCIRCSE: poetry\n'[...] contains the following annotated texts: Seneca Hercules Furens, Seneca Agamemnon, Tacitus Germania, Seneca Oedipus.' (https://universaldependencies.org/treebanks/la_circse/index.html#description 29.09.2025)\nPerseus: historiography, agriculture, politics, poetry\naccording to (https://universaldependencies.org/treebanks/la_perseus/index.html#description 29.09.2025): \n'Augustus Res Gestae\nCicero In Catilinam\nJerome Vulgata\nVergil Aeneid\nOvid Metamorphoses\nPetronius Satyricon\nPhaerus Fabulae\nPropertius Elegies\nSallust Bellum Catilinae\nSuetonius Life of Augustus\nTacitus Historiae'"
+            },
+            {"question_number": 53, 
+                "text": "Please provide a list of the authors represented in the dataset",
+                "answer": "ITTB:\nLLCT:\nPROIEL:\nUDANTE:\nCIRCSE:\nPerseus:"
+            },
+            {"question_number": 54, 
+                "text": "What are the sources of the textversions contained in the dataset? Are the text based on scholarly editions, manuscript transcriptions etc.? Please provide a description.", 
+                "answer": ""
+            },
+            {"comment": "Further comments", "answer": ""}
+        ]},
+        {"section": "Bibliography", "content": [
+            {"reference": {"author": "Konstantin Schulz and Florian Deichsler.", "year": 2024, "title": "SEFLAG: Systematic Evaluation Framework for NLP Models and Datasets in Latin and Ancient Greek.", "In": "Proceedings of the 4th International Conference on Natural Language Processing for Digital Humanities", "pages": "247--258", "location": "Miami, USA", "publisher": " Association for Computational Linguistics"}},
+            {"reference": {"author": "David Bamman and Gregory R. Crane", "year": 2011, "title": "The Ancient Greek and Latin Dependency Treebanks", "In": "Language Technology for Cultural Heritage", "editor": "Caroline Sporleder and Aantal van den Bosch and Kalliopi Zervanou", "series": "Theory and Applications of Natural Language Processing.", "location": "Berlin/Heidelberg"}},
+            {"reference": {"author": "Dag T. T. Haug and Marius L. Jøhndal", "year": 2008, "title": "Creating a Parallel Treebank of the Old Indo-European Bible Translations", "In": "Proceedings of the Second Workshop on Language Technology for Cultural Heritage Data (LaTeCH 2008)", "editor": "Caroline Sporleder and Kiril Ribarov", "pages": "27--34"}},
+            {"reference": {"author": "Federica Gamba and Daniel Zeman", "year": 2023, "title": "Universalising Latin Universal Dependencies: a harmonisation of Latin treebanks in UD", "In": "Proceedings of the Sixth Workshop on Universal Dependencies (UDW, GURT/SyntaxFest 2023)", "pages": "7--16", "location": "Washington, D.C.", "publisher": "Association for Computational Linguistics"}},
+            {"reference": {"author": "Flavio Massimiliano Cecchini, Marco Passarotti, Paola Marongiu, and Daniel Zeman", "year": 2018, "title": "Challenges in Converting the Index Thomisticus Treebank into Universal Dependencies", "In": "Proceedings of the Second Workshop on Universal Dependencies (UDW 2018)", "pages": "27--36", "location": "Brussels, Belgium", "publisher": "Association for Computational Linguistics"}},
+            {"reference": {"author": "Joakim Nivre, Marie-Catherine de Marneffe, Filip Ginter, Jan Hajič, Christopher Manning, Sampo Pyysalo, Sebastian Schuster, Francis Tyers, and Daniel Zeman", "year": 2020, "title": "Universal Dependencies v2: An Evergrowing Multilingual Treebank Collection", "In": "Proceedings of the 12th International Conference on Language Resources and Evaluation (LREC 2020)", "pages": "4034--4043", "location": "Marseille, France"}}
+            ]}
+    ]
+}
+
