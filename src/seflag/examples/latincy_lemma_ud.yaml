@@ -1,0 +1,16 @@
+# Reproduces the LatinCy lemmatization result from the repository README
+# on the test sets of all Latin UD 2.15 treebanks, hosted on the Hugging Face Hub.
+name: latincy-lg-lemma-ud-latin
+language: la
+task: lemmatization
+dataset:
+  source: huggingface
+  repo: daidalos-project/latin_treebanks_ud_test
+  revision: 14ab3708f8f55eaa700ac5828cb3351fe5346474   # pinned for reproducibility
+  split: test
+model:
+  backend: spacy
+  name: la_core_web_lg
+  exclude: [morphologizer, parser, tagger, ner]   # same components as excluded in the original lemma.py
+options:
+  label_normalization: []

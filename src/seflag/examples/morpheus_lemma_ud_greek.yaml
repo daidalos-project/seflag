@@ -1,0 +1,18 @@
+# Morpheus lemmatization on the test sets of all Ancient Greek UD 2.15 treebanks (Hugging Face Hub).
+# Morpheus analyses words out of context; with several candidate lemmas, the first one is used.
+# Requires a local Morpheus installation (path below or $MORPHEUS_PATH).
+name: morpheus-lemma-ud-greek
+language: grc
+task: lemmatization
+dataset:
+  source: huggingface
+  repo: daidalos-project/ancient_greek_treebanks_ud_test
+  revision: b40a2b73e83317051e42b3cb19f90399a04f783f   # pinned for reproducibility
+  split: test
+model:
+  backend: morpheus
+  select: first
+  unknown: empty      # unanalysable words count as errors
+options:
+  # Morpheus marks homonyms with numbers (e.g. 'sum1'); UD lemmas do not
+  label_normalization: [strip_homonym_digits]

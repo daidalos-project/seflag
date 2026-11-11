@@ -1,0 +1,16 @@
+# greCy (grc_proiel_lg) morphological features on the test sets of all Ancient Greek UD 2.15 treebanks
+# (Hugging Face Hub).
+name: grecy-proiel-lg-feats-ud-greek
+language: grc
+task:
+  type: morphology
+  features: universal          # CoNLL 2018 UFeats feature set
+  with_upos: true
+dataset:
+  source: huggingface
+  repo: daidalos-project/ancient_greek_treebanks_ud_test
+  revision: b40a2b73e83317051e42b3cb19f90399a04f783f   # pinned for reproducibility
+  split: test
+model:
+  backend: spacy
+  name: grc_proiel_lg

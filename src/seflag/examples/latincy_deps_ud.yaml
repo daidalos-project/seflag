@@ -1,0 +1,16 @@
+# LatinCy dependency parsing on the test sets of all Latin UD 2.15 treebanks (Hugging Face Hub),
+# scored with the CoNLL 2018 metrics (UAS, LAS, CLAS, MLAS, BLEX) on gold tokens and gold sentences.
+name: latincy-lg-deps-ud-latin
+language: la
+task:
+  type: dependency_parsing
+  # LatinCy writes "Verbform" instead of UD's "VerbForm" (relevant for MLAS)
+  predicted_feature_names: {Verbform: VerbForm}
+dataset:
+  source: huggingface
+  repo: daidalos-project/latin_treebanks_ud_test
+  revision: 14ab3708f8f55eaa700ac5828cb3351fe5346474   # pinned for reproducibility
+  split: test
+model:
+  backend: spacy
+  name: la_core_web_lg

@@ -1,0 +1,14 @@
+# LatinCy UPOS tagging on the test sets of all Latin UD 2.15 treebanks (Hugging Face Hub).
+name: latincy-lg-upos-ud-latin
+language: la
+task:
+  type: pos_tagging
+  tagset: upos
+dataset:
+  source: huggingface
+  repo: daidalos-project/latin_treebanks_ud_test
+  revision: 14ab3708f8f55eaa700ac5828cb3351fe5346474   # pinned for reproducibility
+  split: test
+model:
+  backend: spacy
+  name: la_core_web_lg

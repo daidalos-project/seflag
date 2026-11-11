@@ -1,0 +1,22 @@
+# greCy NER on the Ancient Greek NER test data by Yousef et al. (2022), labels PER / LOC / MISC.
+# The data is read directly from the authors' model repository on the Hugging Face Hub.
+# The label mapping is an interpretation: greCy distinguishes more types than the gold standard.
+# MISC in the gold data mostly covers groups of people (ethnonyms), which corresponds best to greCy's NORP.
+name: grecy-proiel-lg-ner-yousef
+language: grc
+task:
+  type: ner
+  predicted_labels: {PERSON: PER, GOD: PER, LOC: LOC, GPE: LOC, NORP: MISC, ORG: null, EVENT: null, LANGUAGE: null, WORK: null}
+dataset:
+  source: columns
+  # the test data as published by the authors, next to their flair model
+  repo: UGARIT/flair_grc_multi_ner
+  repo_type: model
+  revision: 7a0442e20b01fd60743b77b7545b76ca847a98e0   # pinned for reproducibility
+  path: test.tsv
+  header: false
+  delimiter: " "
+  columns: {form: 0, ner: 1}   # column 2 holds an alternative annotation ('alsoEntity')
+model:
+  backend: spacy
+  name: grc_proiel_lg

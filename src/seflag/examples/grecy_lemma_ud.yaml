@@ -1,0 +1,16 @@
+# Reproduces the greCy (grc_proiel_lg) lemmatization result from the repository README
+# on the test sets of all Ancient Greek UD 2.15 treebanks, hosted on the Hugging Face Hub.
+name: grecy-proiel-lg-lemma-ud-greek
+language: grc
+task: lemmatization
+dataset:
+  source: huggingface
+  repo: daidalos-project/ancient_greek_treebanks_ud_test
+  revision: b40a2b73e83317051e42b3cb19f90399a04f783f   # pinned for reproducibility
+  split: test
+model:
+  backend: spacy
+  name: grc_proiel_lg
+  exclude: [morphologizer, parser, tagger]   # same components as excluded in the original lemma.py
+options:
+  label_normalization: []

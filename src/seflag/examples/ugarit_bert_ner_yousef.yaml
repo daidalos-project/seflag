@@ -1,0 +1,23 @@
+# UGARIT/grc-ner-bert (Transformers token classification) on the Ancient Greek NER test data by Yousef et al.
+# The model predicts PER, LOC, NORP and MISC; the gold data has PER, LOC and MISC, where MISC mostly covers
+# groups of people (ethnonyms). Both NORP and MISC are therefore mapped to MISC.
+# NOTE: the model's card reports scores on this test set, so it is not known whether it was used during training.
+name: ugarit-grc-ner-bert-yousef
+language: grc
+task:
+  type: ner
+  predicted_labels: {NORP: MISC}
+dataset:
+  source: columns
+  repo: UGARIT/flair_grc_multi_ner
+  repo_type: model
+  revision: 7a0442e20b01fd60743b77b7545b76ca847a98e0   # pinned for reproducibility
+  path: test.tsv
+  header: false
+  delimiter: " "
+  columns: {form: 0, ner: 1}
+model:
+  backend: transformers
+  name: UGARIT/grc-ner-bert
+  revision: e751fd8991e9f71578aaa6d80a8cebf591f9c5f5   # pinned for reproducibility
+  layer: entities

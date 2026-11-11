@@ -3,3 +3,4 @@ __pycache__/
 .env
 word_embeddings/
 *.csv
+src/seflag/ARCHITECTURE.md

@@ -1,0 +1,20 @@
+# LatinCy NER on the Herodotos Project Latin NER data (Erdmann et al.).
+# CAUTION: according to its model card, LatinCy was trained on the Herodotos data, so this is (at least partly)
+# an evaluation on training data. GWtrain is excluded; the remaining files may still overlap with LatinCy's training.
+name: latincy-lg-ner-herodotos
+language: la
+task:
+  type: ner
+  # common scheme: person / location / group
+  gold_labels: {PRS: person, GEO: location, GRP: group}
+  predicted_labels: {PERSON: person, LOC: location, NORP: group}
+dataset:
+  source: columns
+  repo: daidalos-project/Herodotos_dataset
+  revision: 6e5affb55837184fa7b2896926d4ecb1b2c86994   # pinned for reproducibility
+  path: [GWtest.crf, CW.crf, Ovid.crf, PlinyElder.crf, PlinyYounger.crf]
+  columns: {form: Word, ner: Label}
+  tag_scheme: {position: suffix}   # tags look like PRS-B / PRS-I; '0' = outside
+model:
+  backend: spacy
+  name: la_core_web_lg

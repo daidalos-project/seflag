@@ -1,0 +1,17 @@
+# LatinCy morphological features on the test sets of all Latin UD 2.15 treebanks (Hugging Face Hub).
+name: latincy-lg-feats-ud-latin
+language: la
+task:
+  type: morphology
+  features: universal          # CoNLL 2018 UFeats feature set; use "model" to score only the 8 features LatinCy predicts
+  with_upos: true
+  # LatinCy writes "Verbform" instead of UD's "VerbForm"
+  predicted_feature_names: {Verbform: VerbForm}
+dataset:
+  source: huggingface
+  repo: daidalos-project/latin_treebanks_ud_test
+  revision: 14ab3708f8f55eaa700ac5828cb3351fe5346474   # pinned for reproducibility
+  split: test
+model:
+  backend: spacy
+  name: la_core_web_lg

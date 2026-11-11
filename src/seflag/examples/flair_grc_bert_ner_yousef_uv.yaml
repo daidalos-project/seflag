@@ -1,0 +1,25 @@
+# Same evaluation as flair_grc_bert_ner_yousef.yaml, but the flair model runs in a separate environment with a
+# different flair version, created and cached by uv (https://docs.astral.sh/uv/) on first use. The current
+# environment is not changed.
+#
+# Alternative without uv, with a conda environment you created yourself (with seflag and flair installed):
+#   launcher:
+#     command: [conda, run, --no-capture-output, -n, seflag-flair, python]
+name: flair-grc-bert-ner-yousef-flair-0.15
+language: grc
+task: ner
+dataset:
+  source: columns
+  repo: UGARIT/flair_grc_multi_ner
+  repo_type: model
+  revision: 7a0442e20b01fd60743b77b7545b76ca847a98e0   # pinned for reproducibility
+  path: test.tsv
+  header: false
+  delimiter: " "
+  columns: {form: 0, ner: 1}
+model:
+  backend: flair
+  name: UGARIT/flair_grc_bert_ner
+  revision: 971ad46dbb24e7314861f82465cd2184d98c3e3c   # pinned for reproducibility
+  launcher:
+    requirements: ["flair==0.15.1"]

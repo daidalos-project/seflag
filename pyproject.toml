@@ -1,0 +1,61 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "seflag"
+dynamic = ["version"]
+description = "Systematic Evaluation Framework for NLP models and datasets in Latin and Ancient Greek"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "0BSD"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Konstantin Schulz" },
+    { name = "Florian Deichsler" }
+    ]
+keywords = ["nlp", "evaluation", "latin", "ancient-greek", "benchmark", "spacy"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Linguistic",
+]
+# Core = everything needed to run an evaluation with spaCy-based models on CoNLL-U data.
+# spaCy is core because spaCy Doc/Token objects are seflag's internal data model.
+dependencies = [
+    "spacy>=3.7,<4",
+    "pydantic>=2.5",
+    "pyyaml>=6",
+]
+
+[project.optional-dependencies]
+hf = ["datasets>=2.18", "huggingface-hub>=0.20"]
+# placeholders for upcoming backends; kept separate because their pins tend to conflict
+flair = ["flair>=0.13", "huggingface-hub>=0.20"]
+transformers = ["transformers>=4.36", "torch>=2"]
+morpheus = ["betacode>=1.0"]
+embeddings = ["gensim>=4.3"]
+test = ["pytest>=8"]
+all = ["seflag[hf,flair,transformers,morpheus,embeddings]"]
+
+[project.scripts]
+seflag = "seflag.cli:main"
+
+[project.urls]
+Repository = "https://github.com/daidalos-project/seflag"
+
+[tool.hatch.version]
+path = "src/seflag/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/seflag"]
+exclude = ["src/seflag/tests"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/seflag", "pyproject.toml", "README.md", "LICENSE"]
+
+[tool.pytest.ini_options]
+testpaths = ["src/seflag/tests"]
+markers = ["models: tests that need installed spaCy models (slow)"]

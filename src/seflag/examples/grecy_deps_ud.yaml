@@ -1,0 +1,14 @@
+# greCy (grc_proiel_lg) dependency parsing on the test sets of all Ancient Greek UD 2.15 treebanks (Hugging Face Hub),
+# scored with the CoNLL 2018 metrics (UAS, LAS, CLAS, MLAS, BLEX) on gold tokens and gold sentences.
+name: grecy-proiel-lg-deps-ud-greek
+language: grc
+task:
+  type: dependency_parsing
+dataset:
+  source: huggingface
+  repo: daidalos-project/ancient_greek_treebanks_ud_test
+  revision: b40a2b73e83317051e42b3cb19f90399a04f783f   # pinned for reproducibility
+  split: test
+model:
+  backend: spacy
+  name: grc_proiel_lg
