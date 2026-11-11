@@ -9,7 +9,7 @@ PROIEL = Pragmatic Resources of Old Indo-European Languages, UD Latin PROIEL
 SEFLAG = Systematic Evaluation Framework for natural language processing models and datasets in Latin and Ancient Greek
 UD = Universal Dependencies
 UDante = UDante Treebank, UD Latin UDante
-CIRCSE = CIRCSE Treebank, UD Latin CIRCSE 
+CIRCSE = CIRCSE Treebank, UD Latin CIRCSE
 LLCT = Late Latin Charter Treebank, UD Latin LLCT
 ITTB = Index Thomisticus Treebank, UD Latin ITTB
 
@@ -25,7 +25,7 @@ ITTB = Index Thomisticus Treebank, UD Latin ITTB
 
 - The dataset consists the test splits of all latin treebanks part of version 2.15 of the Universal Dependencies Project (see below), namely: The dataset was created to serve as a goldstandard for the evaluation of classical language NLP tools as part of SEFLAG 
 - The original goals of the UD treebanks (abridged from https://universaldependencies.org/introduction.html#introduction (as of Sept. 2025)): The Universal Dependencies (UD) treebanks were created to facilitate multilingual syntactic analysis and parsing by providing a standardized framework for dependency structures across languages. The goal was to support a broad range of tasks such as natural language understanding, machine translation, and cross-lingual studies, while addressing the lack of consistent linguistic annotations across diverse languages. 
-  "The annotation scheme is based on an evolution of (universal) Stanford dependencies (de Marneffe et al., 2006, 2008, 2014), Google universal part-of-speech tags (Petrov et al., 2012), and the Interset interlingua for morphosyntactic tagsets (Zeman, 2008)." https://universaldependencies.org/introduction.html#introduction (as of Sept. 2025)  
+  'The annotation scheme is based on an evolution of (universal) Stanford dependencies (de Marneffe et al., 2006, 2008, 2014), Google universal part-of-speech tags (Petrov et al., 2012), and the Interset interlingua for morphosyntactic tagsets (Zeman, 2008).' https://universaldependencies.org/introduction.html#introduction (as of Sept. 2025)  
 
 ### 2. Who created the dataset (e.g., which team, research group) and on behalf of which entity (e.g., company, institution, organization)?
 
@@ -43,14 +43,14 @@ ITTB = Index Thomisticus Treebank, UD Latin ITTB
 - CIRCSE:
   - https://universaldependencies.org/treebanks/la_circse/index.html#description
   - CIRCSE Research Centre in Milan (https://centridiricerca.unicatt.it/circse/en.html)
-  - "The annotation of Seneca Hercules Furens and Agamemnon has been conducted in the framework of the LiLa: Linking Latin project. LiLa has received funding from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation programme – Grant Agreement No. 769994. Warmful thanks to Federica Gamba and Flavio Massimiliano Cecchini for their support and precious advices during the annotation process." (https://universaldependencies.org/treebanks/la_circse/index.html#acknowledgments 29.09.2025)
+  - 'The annotation of Seneca Hercules Furens and Agamemnon has been conducted in the framework of the LiLa: Linking Latin project. LiLa has received funding from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation programme – Grant Agreement No. 769994. Warmful thanks to Federica Gamba and Flavio Massimiliano Cecchini for their support and precious advices during the annotation process.' (https://universaldependencies.org/treebanks/la_circse/index.html#acknowledgments 29.09.2025)
 - UDante:
-  - "The syntactic annotation of the UDante treebank has been created through a manual annotation process performed in the context of a collaboration between the University of Pisa (responsible: Mirko Tavoni) and the LiLa: Linking Latin project at the Università Cattolica del Sacro Cuore, Milan, Italy (PI: Marco Passarotti). The annotation process was co-ordinated by Flavio Massimiliano Cecchini, Giovanni Moretti and Rachele Sprugnoli (all based at the Università Cattolica del Sacro Cuore)." (https://universaldependencies.org/treebanks/la_udante/index.html#description, 29.09.2025)
+  - 'The syntactic annotation of the UDante treebank has been created through a manual annotation process performed in the context of a collaboration between the University of Pisa (responsible: Mirko Tavoni) and the LiLa: Linking Latin project at the Università Cattolica del Sacro Cuore, Milan, Italy (PI: Marco Passarotti). The annotation process was co-ordinated by Flavio Massimiliano Cecchini, Giovanni Moretti and Rachele Sprugnoli (all based at the Università Cattolica del Sacro Cuore).' (https://universaldependencies.org/treebanks/la_udante/index.html#description, 29.09.2025)
 - LLCT:
-  - "The conversion of the LLCT2 into the Universal Dependencies was realized by Flavio Massimiliano Cecchini and Marco Passarotti within the LiLa project (Linking Latin, https://lila-erc.eu/). The original LLCT2 was annotated by Timo Korkiakangas under projects funded by the University of Oslo and the Academy of Finland." (https://universaldependencies.org/treebanks/la_llct/index.html 29.09.2025)
+  - 'The conversion of the LLCT2 into the Universal Dependencies was realized by Flavio Massimiliano Cecchini and Marco Passarotti within the LiLa project (Linking Latin, https://lila-erc.eu/). The original LLCT2 was annotated by Timo Korkiakangas under projects funded by the University of Oslo and the Academy of Finland.' (https://universaldependencies.org/treebanks/la_llct/index.html 29.09.2025)
   - see also: Korkiakangas, T. 2021. ‚‚Late Latin Charter Treebank: contents and annotation‘‘. In: Corpora. Vol.16, No.2, S. 191–203.s
 - ITTB:
-  - Founded 1949 by Roberto Busa. The Index Thomisticus is edited by the CIRCSE Research Center in Milan. see: Passarotti, Marco. 2019. “The Index Thomisticus Treebank Project.” In: Berti, Monica (ed.): Digital Classical Philology: Ancient Greek and Latin in the Digital Revolution. Berlin/Boston. pp. 299–320. Online: https://doi.org/10.1515/9783110599572-017 18.12.2024. The treebank available on the UD website is a conversion from the original treebank, see Passarotti et al. (2018).
+  - Founded 1949 by Roberto Busa. The Index Thomisticus is edited by the CIRCSE Research Center in Milan. see: Passarotti, Marco. 2019. 'The Index Thomisticus Treebank Project.' In: Berti, Monica (ed.): Digital Classical Philology: Ancient Greek and Latin in the Digital Revolution. Berlin/Boston. pp. 299–320. Online: https://doi.org/10.1515/9783110599572-017 18.12.2024. The treebank available on the UD website is a conversion from the original treebank, see Passarotti et al. (2018).
   - see aslo: https://universaldependencies.org/treebanks/la_ittb/index.html#acknowledgments
 
 ### 3. Who funded the creation of the dataset? If there is an associated grant, please provide the name of the grantor and the grant name and number.
@@ -58,12 +58,12 @@ ITTB = Index Thomisticus Treebank, UD Latin ITTB
 **Reicht die Angabe für Daidalos oder besser für alles recherchieren?**
 
 - Daidalos project funded by DFG
-- "UD is an open collaboration with many project members." https://universaldependencies.org/introduction.html#project-organization, refer to the linked site for further information
+- 'UD is an open collaboration with many project members.' https://universaldependencies.org/introduction.html#project-organization, refer to the linked site for further information
 - Perseus funded by
 - PROIEL funded by
 - CIRCSE funded by
 - UDante funded by:
-  - "The LiLa project has received funding from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation programme – Grant Agreement No. 769994." (https://universaldependencies.org/treebanks/la_udante/index.html#acknowledgments 29.09.2025)
+  - 'The LiLa project has received funding from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation programme – Grant Agreement No. 769994.' (https://universaldependencies.org/treebanks/la_udante/index.html#acknowledgments 29.09.2025)
 - LLCT funded by
   - 
 
@@ -385,22 +385,22 @@ ITTB = Index Thomisticus Treebank, UD Latin ITTB
 ### 52. Which genre? Which topics? Which authors?
 
 - ITTB: theology
-  - "Latin data from the Index Thomisticus Treebank. Data are taken from the Index Thomisticus corpus by Roberto Busa SJ, which contains the complete work by Thomas Aquinas (1225–1274; Medieval Latin) and by 61 other authors related to Thomas." (https://universaldependencies.org/treebanks/la_ittb/index.html#description 29.09.2025)
+  - 'Latin data from the Index Thomisticus Treebank. Data are taken from the Index Thomisticus corpus by Roberto Busa SJ, which contains the complete work by Thomas Aquinas (1225–1274; Medieval Latin) and by 61 other authors related to Thomas.' (https://universaldependencies.org/treebanks/la_ittb/index.html#description 29.09.2025)
 - LLCT: charters
-  - "The LLCT2 contains 521 Early Medieval Latin original documents (charters) written in Tuscia (Tuscany), Italy, between AD 774 and 897. They all represent the legal (documentary) genre. Their language is a non-standard variety of Latin which differs from Classical as well as from Medieval Latin in terms of spelling, morphology, and syntax." (https://universaldependencies.org/treebanks/la_llct/index.html 29.09.2025)
+  - 'The LLCT2 contains 521 Early Medieval Latin original documents (charters) written in Tuscia (Tuscany), Italy, between AD 774 and 897. They all represent the legal (documentary) genre. Their language is a non-standard variety of Latin which differs from Classical as well as from Medieval Latin in terms of spelling, morphology, and syntax.' (https://universaldependencies.org/treebanks/la_llct/index.html 29.09.2025)
 - PROIEL: bible, letters, historiography, agriculture, politics
-  - "The Latin PROIEL treebank is based on the Latin data from the PROIEL treebank, and contains most of the Vulgate New Testament translations plus selections from Caesar’s Gallic War, Cicero’s Letters to Atticus, Palladius’ Opus Agriculturae and the first book of Cicero’s De officiis." (https://universaldependencies.org/treebanks/la_proiel/index.html#description 28.09.2025)
+  - 'The Latin PROIEL treebank is based on the Latin data from the PROIEL treebank, and contains most of the Vulgate New Testament translations plus selections from Caesar’s Gallic War, Cicero’s Letters to Atticus, Palladius’ Opus Agriculturae and the first book of Cicero’s De officiis.' (https://universaldependencies.org/treebanks/la_proiel/index.html#description 28.09.2025)
 - UDANTE: letters, philology, politics, poetry
-  - "De vulgari eloquentia: 13 873 syntactic words for 421 sentences over 2 books
+  - 'De vulgari eloquentia: 13 873 syntactic words for 421 sentences over 2 books
     Monarchia: 23403 syntactic words for 682 sentences over 3 books
     Letters: 11 993 syntactic words for 376 sentences over 13 letters
     Questio de aqua et terra: 5 243 syntactic words for 133 sentences
-    Eclogues: 2 730 syntactic words for 111 sentences over 4 eclogues" (https://universaldependencies.org/treebanks/la_udante/index.html#description 29.09.2025)
+    Eclogues: 2 730 syntactic words for 111 sentences over 4 eclogues' (https://universaldependencies.org/treebanks/la_udante/index.html#description 29.09.2025)
 - CIRCSE: poetry
-  - "[...] contains the following annotated texts: Seneca Hercules Furens, Seneca Agamemnon, Tacitus Germania, Seneca Oedipus." (https://universaldependencies.org/treebanks/la_circse/index.html#description 29.09.2025)
+  - '[...] contains the following annotated texts: Seneca Hercules Furens, Seneca Agamemnon, Tacitus Germania, Seneca Oedipus.' (https://universaldependencies.org/treebanks/la_circse/index.html#description 29.09.2025)
 - Perseus: historiography, agriculture, politics, poetry
   - according to (https://universaldependencies.org/treebanks/la_perseus/index.html#description 29.09.2025): 
-  "Augustus 	Res Gestae
+  'Augustus 	Res Gestae
   Cicero 	In Catilinam
   Jerome 	Vulgata
   Vergil 	Aeneid
@@ -410,7 +410,7 @@ ITTB = Index Thomisticus Treebank, UD Latin ITTB
   Propertius 	Elegies
   Sallust 	Bellum Catilinae
   Suetonius 	Life of Augustus
-  Tacitus 	Historiae"
+  Tacitus 	Historiae'
 
 ### 53. Based on which editions?
 
