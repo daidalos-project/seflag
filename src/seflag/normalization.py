@@ -1,7 +1,7 @@
 """Named string normalizers that can be referenced from configuration files.
 
 Normalization is a frequent source of hidden differences between published evaluation results
-(e.g. u/v spelling in Latin, Unicode composition in Greek). In seflag, every normalization step
+(e.g. u/v spelling in Latin, Unicode composition in Greek). In SEFLAG, every normalization step
 is explicit and recorded in the results.
 """
 

@@ -46,3 +46,26 @@ def test_unknown_components(conllu_dir, fake_backend):
         run(config(conllu_dir, "nope"))
     with pytest.raises(ConfigError, match="section 'task'"):
         run(config(conllu_dir, fake_backend, task={"type": "pos_tagging", "tagset": "bad"}))
+
+
+def test_cache_info_and_purge(tmp_path, monkeypatch, capsys):
+    from seflag.cli import main
+
+    monkeypatch.setenv("SEFLAG_HOME", str(tmp_path))
+    assert main(["cache", "purge", "--yes"]) == 0
+    assert "nothing to delete" in capsys.readouterr().out
+    downloads = tmp_path / "downloads" / "abc"
+    downloads.mkdir(parents=True)
+    (downloads / "model.bin").write_bytes(b"x" * 2048)
+    assert main(["cache", "info"]) == 0
+    out = capsys.readouterr().out
+    assert "1 file(s), 2.0 KB" in out and "model.bin" in out
+    monkeypatch.setattr("sys.stdin.isatty", lambda: False)
+    assert main(["cache", "purge"]) == 1  # no confirmation possible -> nothing deleted
+    assert (downloads / "model.bin").exists()
+    monkeypatch.setattr("sys.stdin.isatty", lambda: True)
+    monkeypatch.setattr("builtins.input", lambda prompt: "n")
+    assert main(["cache", "purge"]) == 0 and (downloads / "model.bin").exists()
+    monkeypatch.setattr("builtins.input", lambda prompt: "y")
+    assert main(["cache", "purge"]) == 0 and not (tmp_path / "downloads").exists()
+    assert "freed 2.0 KB" in capsys.readouterr().out

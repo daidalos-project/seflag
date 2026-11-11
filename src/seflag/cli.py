@@ -1,4 +1,4 @@
-"""Command line interface: ``seflag run``, ``seflag list``, ``seflag convert-conllu``, ``seflag export``."""
+"""Command line interface: ``seflag run``, ``list``, ``convert-conllu``, ``export`` and ``cache``."""
 
 from __future__ import annotations
 
@@ -100,6 +100,48 @@ def _cmd_export(args: argparse.Namespace) -> int:
     return 0
 
 
+def _human_size(size: float) -> str:
+    for unit in ("B", "KB", "MB", "GB"):
+        if size < 1024 or unit == "GB":
+            return f"{size:.0f} {unit}" if unit == "B" else f"{size:.1f} {unit}"
+        size /= 1024
+    return f"{size:.1f} GB"
+
+
+def _cmd_cache(args: argparse.Namespace) -> int:
+    import shutil
+
+    from seflag.data.download import downloads_root
+
+    root: Path = downloads_root()
+    files: list[Path] = [p for p in root.rglob("*") if p.is_file()] if root.is_dir() else []
+    size: int = sum(p.stat().st_size for p in files)
+    if args.cache_command == "info":
+        print(f"downloads: {root}")
+        print(f"  {len(files)} file(s), {_human_size(size)}")
+        for path in sorted(files, key=lambda p: -p.stat().st_size)[:args.limit]:
+            print(f"  {_human_size(path.stat().st_size):>9}  {path.name}")
+        print("Models and datasets from the Hugging Face Hub and environments created by uv are cached by those "
+              "tools (see `hf cache` and `uv cache`).")
+        return 0
+    # purge
+    if not files:
+        print(f"nothing to delete in {root}")
+        return 0
+    if not args.yes:
+        if not sys.stdin.isatty():
+            print(f"error: refusing to delete {len(files)} file(s) ({_human_size(size)}) in {root} without "
+                  "confirmation; pass --yes", file=sys.stderr)
+            return 1
+        answer: str = input(f"Delete {len(files)} downloaded file(s) ({_human_size(size)}) in {root}? [y/N] ")
+        if answer.strip().lower() not in ("y", "yes"):
+            print("nothing deleted")
+            return 0
+    shutil.rmtree(root)
+    print(f"deleted {len(files)} file(s), freed {_human_size(size)}; files are downloaded again when needed")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="seflag", description=__doc__)
     parser.add_argument("--version", action="version", version=f"seflag {__version__}")
@@ -129,12 +171,22 @@ def build_parser() -> argparse.ArgumentParser:
     p_exp.add_argument("--split", default="test", help="Split name, i.e. the parquet file name (default: test).")
     p_exp.set_defaults(func=_cmd_export)
 
+    p_cache = sub.add_parser("cache", help="Show or delete files downloaded by URL (datasets, embedding models).")
+    cache_sub = p_cache.add_subparsers(dest="cache_command", required=True)
+    p_info = cache_sub.add_parser("info", help="Show location, size and the largest downloaded files.")
+    p_info.add_argument("--limit", type=int, default=10, help="Number of files to list (default: 10).")
+    p_purge = cache_sub.add_parser("purge", help="Delete all downloaded files to free disk space.")
+    p_purge.add_argument("-y", "--yes", action="store_true", help="Do not ask for confirmation.")
+    p_cache.set_defaults(func=_cmd_cache)
+
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    logging.basicConfig(level=logging.WARNING if args.quiet else logging.INFO, format="%(levelname)s %(message)s")
+    # INFO messages only from SEFLAG itself; libraries such as gensim are very talkative at INFO level
+    logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(message)s")
+    logging.getLogger("seflag").setLevel(logging.WARNING if args.quiet else logging.INFO)
     try:
         return args.func(args)
     except SeflagError as e:

@@ -65,3 +65,37 @@ def top_errors(gold: Sequence[Hashable], pred: Sequence[Hashable], n: int) -> li
     _check(gold, pred)
     errors: Counter = Counter((g, p) for g, p in zip(gold, pred) if g != p)
     return [{"gold": g, "predicted": p, "count": c} for (g, p), c in errors.most_common(n)]
+
+
+def _ranks(values: Sequence[float]) -> list[float]:
+    """1-based ranks; ties get the average of their ranks (as in scipy.stats.rankdata)."""
+    order: list[int] = sorted(range(len(values)), key=lambda i: values[i])
+    ranks: list[float] = [0.0] * len(values)
+    i: int = 0
+    while i < len(order):
+        j: int = i
+        while j + 1 < len(order) and values[order[j + 1]] == values[order[i]]:
+            j += 1
+        for k in range(i, j + 1):
+            ranks[order[k]] = (i + j) / 2 + 1
+        i = j + 1
+    return ranks
+
+
+def pearson(x: Sequence[float], y: Sequence[float]) -> float | None:
+    """Pearson's correlation coefficient; None for fewer than two points or constant input."""
+    _check(x, y)
+    n: int = len(x)
+    if n < 2:
+        return None
+    mx, my = sum(x) / n, sum(y) / n
+    sxy = sum((a - mx) * (b - my) for a, b in zip(x, y))
+    sxx = sum((a - mx) ** 2 for a in x)
+    syy = sum((b - my) ** 2 for b in y)
+    return sxy / (sxx * syy) ** 0.5 if sxx and syy else None
+
+
+def spearman(x: Sequence[float], y: Sequence[float]) -> float | None:
+    """Spearman's rank correlation (Pearson on average ranks, so ties are handled as in scipy)."""
+    _check(x, y)
+    return pearson(_ranks(x), _ranks(y))

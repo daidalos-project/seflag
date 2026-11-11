@@ -1,4 +1,4 @@
-"""Runs a backend in the current Python environment on behalf of a seflag process elsewhere.
+"""Runs a backend in the current Python environment on behalf of a SEFLAG process elsewhere.
 
 Usage (internal): ``python -m seflag.worker <request.json> <output dir>``. The request holds the evaluation
 configuration and the sentences; the output directory receives the predictions as a spaCy ``DocBin``

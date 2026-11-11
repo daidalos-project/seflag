@@ -4,7 +4,7 @@ Every dataset adapter yields one :class:`SentenceRecord` per sentence, holding o
 per syntactic word (CoNLL-U semantics). Records hold everything a CoNLL-U sentence contains (comments,
 multiword tokens, empty nodes, DEPS, MISC), so CoNLL-U -> records -> CoNLL-U is lossless.
 The same structure, serialized with :meth:`SentenceRecord.to_dict`, is the layout of the Parquet datasets
-created by :mod:`seflag.data.convert`. Records are turned into spaCy ``Doc`` objects, which are seflag's
+created by :mod:`seflag.data.convert`. Records are turned into spaCy ``Doc`` objects, which are SEFLAG's
 internal data model.
 """
 

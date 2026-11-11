@@ -1,0 +1,24 @@
+# LiLa lemma embeddings for Latin (fastText CBOW, 100 dimensions, trained on the lemmatized LASLA corpus;
+# Sprugnoli, Passarotti & Moretti 2019) on the Latin synonym selection benchmark from the same authors:
+# 2,758 items with a target lemma, its synonym and three distractors. Score: share of items where the synonym
+# is strictly the most similar candidate (chance: 0.25).
+name: lasla-fasttext-cbow-dim100-latin-synonyms
+language: la
+task:
+  type: synonym_selection
+  # The model knows 11,327 lemmas (minimum frequency 5), so about a third of the items contain unknown lemmas:
+  # 'skip' evaluates 63% of the items (accuracy 0.806), 'subwords' all of them via fastText n-grams (0.796).
+  oov: skip                    # items whose target or synonym is unknown are skipped (coverage is reported)
+  missing_candidates: skip_item  # strict; 'ignore' drops unknown distractors (behaviour of the old script)
+dataset:
+  source: word_choices
+  url: https://zenodo.org/api/records/4022818/files/syn-selection-benchmark-Latin.tsv/content
+  checksum: md5:6c0d8edd89abbf9db10654579e59f567
+  target_column: 0
+  choices_start: 1             # synonym, then three distractors
+  answer: 0
+model:
+  backend: gensim
+  url: https://embeddings.lila-erc.eu/samples/download/fasttext/allLASLA-lemmi-fast-100-CBOW-win10-min5.bin
+  checksum: sha256:f7c58c68d9a2bff7f28a95a0a807713fbb42c9bd7fad6146fa48600dfb4122fd   # computed by us; not published
+  format: fasttext

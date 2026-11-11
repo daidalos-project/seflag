@@ -1,0 +1,24 @@
+# Ancient Greek fastText embeddings (Myerston 2021, CBOW, 50 dimensions) on AGREE (Stopponi et al. 2024),
+# task 2: 1,438 word pairs with relatedness scores (0-100) by experts. Score: Spearman correlation with cosine.
+name: grc-fasttext-cbow-dim50-agree-similarity
+language: grc
+task:
+  type: word_similarity
+  oov: skip              # pairs with words outside the vocabulary are skipped; 'subwords' uses fastText n-grams
+dataset:
+  source: word_pairs
+  url: https://zenodo.org/api/records/8027490/files/2_agree_task2.json/content
+  checksum: md5:3f037ae1ad530f9098eda1e64e19243a
+  format: json
+  records_key: pairs
+  pair_field: pair       # e.g. "τέμνω, καίω"
+  score_field: score
+model:
+  backend: gensim
+  url: https://zenodo.org/api/records/7630945/files/grc_fasttext_cbow_nn2_xn10_dim50.bin/content
+  checksum: md5:0ce8204cf541cd746608a38e4aec8828
+  format: fasttext
+  # The original SEFLAG script used gensim's evaluate_word_pairs defaults, which correspond to
+  #   max_vocabulary: 300000
+  #   case_insensitive: true
+  # and give Spearman 0.3836 (25.7% of the pairs skipped) instead of 0.3805 (36.5% skipped).

@@ -23,7 +23,7 @@ classifiers = [
     "Topic :: Text Processing :: Linguistic",
 ]
 # Core = everything needed to run an evaluation with spaCy-based models on CoNLL-U data.
-# spaCy is core because spaCy Doc/Token objects are seflag's internal data model.
+# spaCy is core because spaCy Doc/Token objects are SEFLAG's internal data model.
 dependencies = [
     "spacy>=3.7,<4",
     "pydantic>=2.5",

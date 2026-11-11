@@ -2,7 +2,7 @@
 # different flair version, created and cached by uv (https://docs.astral.sh/uv/) on first use. The current
 # environment is not changed.
 #
-# Alternative without uv, with a conda environment you created yourself (with seflag and flair installed):
+# Alternative without uv, with a conda environment you created yourself (with the seflag package and flair installed):
 #   launcher:
 #     command: [conda, run, --no-capture-output, -n, seflag-flair, python]
 name: flair-grc-bert-ner-yousef-flair-0.15

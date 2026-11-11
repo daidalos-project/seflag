@@ -120,7 +120,7 @@ def test_ner_tag_column_and_export_roundtrip(fake_backend, tmp_path):
         repo="parquet", data_files={"test": str(tmp_path / "ner.parquet")}), config)
     records = list(adapter.records())
     assert [(e.first, e.last, e.label) for e in records[0].entities] == [(1, 2, "PER"), (3, 3, "LOC")]
-    # export to seflag's layout and read back: entities survive, None (= not annotated) stays None
+    # export to SEFLAG's layout and read back: entities survive, None (= not annotated) stays None
     records.append(SentenceRecord.from_dict({"tokens": [{"form": "x"}]}))
     records_to_dataset(records).to_parquet(str(tmp_path / "out.parquet"))
     assert verify_records(records, tmp_path / "out.parquet") == []

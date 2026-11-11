@@ -148,7 +148,8 @@ def test_uv_command(monkeypatch):
         "/usr/bin/uv", "run", "--no-project", "--isolated", "--python", "3.11",
         "--with-editable", "/src/seflag", "--with", "flair==0.15.1", "python"]
     monkeypatch.setattr(launcher, "seflag_requirement", lambda: ("seflag==0.1.0", False))
-    assert launcher.python_command(launcher.LauncherSpec(requirements=[]))[4:6] == ["--with", "seflag==0.1.0"]
+    default = launcher.python_command(launcher.LauncherSpec(requirements=[]))
+    assert default[4:8] == ["--python", f"{sys.version_info.major}.{sys.version_info.minor}", "--with", "seflag==0.1.0"]
     monkeypatch.setattr(launcher.shutil, "which", lambda name: None)
     with pytest.raises(MissingDependencyError, match="uv"):
         launcher.python_command(spec)

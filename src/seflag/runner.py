@@ -15,7 +15,10 @@ from spacy.vocab import Vocab
 
 from seflag import provenance, registry
 from seflag.config import EvaluationConfig, validate_component_params
-from seflag.errors import DataError
+from seflag.backends.embeddings import EmbeddingBackend
+from seflag.data.lexical import LexicalDataset
+from seflag.errors import ConfigError, DataError
+from seflag.tasks.base import LexicalTask
 from seflag.normalization import get_pipeline
 
 logger = logging.getLogger("seflag")
@@ -69,19 +72,16 @@ def _backend(config: EvaluationConfig):
     params = validate_component_params(component, config.model.params, "model")  # validate before launching
     if config.model.launcher is None:
         return component(params, config)
+    if issubclass(component, EmbeddingBackend):
+        raise ConfigError("'launcher' is not supported for embedding backends yet; run them in the current "
+                          "environment.")
     from seflag.backends.launched import LaunchedBackend
     from seflag.launcher import python_command
 
     return LaunchedBackend(config, python_command(config.model.launcher))
 
 
-def run(config: EvaluationConfig) -> EvaluationResult:
-    """Runs one evaluation: load gold data, annotate it with the model, compare, record provenance."""
-    timings: dict[str, float] = {}
-    task = _build("tasks", config.task.type, config.task.params, "task", config.options)
-    dataset = _build("datasets", config.dataset.source, config.dataset.params, "dataset", config)
-    backend = _backend(config)
-
+def _run_tokens(config: EvaluationConfig, task, dataset, backend, timings: dict[str, float]):
     start: float = time.perf_counter()
     gold: list[Doc] = dataset.load_docs(Vocab(), task.required_layers, config.options.max_sentences)
     if not gold:
@@ -97,7 +97,41 @@ def run(config: EvaluationConfig) -> EvaluationResult:
     logger.info("Annotated with %s backend in %.1fs", config.model.backend, timings["predict_s"])
 
     task.bind_backend(backend)  # after prediction, so launched backends can report their label inventories
-    task_result = task.evaluate(gold, predicted)
+    return task.evaluate(gold, predicted)
+
+
+def _run_lexical(config: EvaluationConfig, task, dataset, backend, timings: dict[str, float]):
+    start: float = time.perf_counter()
+    items: list = dataset.items()[:config.options.max_sentences]
+    if not items:
+        raise DataError("The dataset contains no items.")
+    _ = backend.metadata()  # loads the model, so that loading and evaluation time are reported separately
+    timings["load_data_s"] = time.perf_counter() - start
+    logger.info("Loaded %d items and the embedding model", len(items))
+    start = time.perf_counter()
+    result = task.evaluate_lexical(items, backend)
+    timings["evaluate_s"] = time.perf_counter() - start
+    return result
+
+
+def run(config: EvaluationConfig) -> EvaluationResult:
+    """Runs one evaluation: load gold data, annotate it with the model, compare, record provenance."""
+    timings: dict[str, float] = {}
+    task = _build("tasks", config.task.type, config.task.params, "task", config.options)
+    dataset = _build("datasets", config.dataset.source, config.dataset.params, "dataset", config)
+    backend = _backend(config)
+
+    if isinstance(task, LexicalTask) != isinstance(dataset, LexicalDataset) or \
+            isinstance(task, LexicalTask) != isinstance(backend, EmbeddingBackend):
+        raise ConfigError(
+            f"Task '{config.task.type}', dataset source '{config.dataset.source}' and backend "
+            f"'{config.model.backend}' do not fit together: word embedding tasks (word_similarity, word_retrieval, "
+            "synonym_selection) need a lexical dataset (word_pairs, word_choices) and an embedding backend "
+            "(gensim); all other tasks need sentence datasets and annotation backends.")
+    if isinstance(task, LexicalTask):
+        task_result = _run_lexical(config, task, dataset, backend, timings)
+    else:
+        task_result = _run_tokens(config, task, dataset, backend, timings)
     result = EvaluationResult(
         name=config.display_name,
         task=config.task.type,

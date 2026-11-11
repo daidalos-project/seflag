@@ -45,6 +45,21 @@ class Task(ABC):
         ...
 
 
+class LexicalTask(Task):
+    """Base for type-level tasks that evaluate word embeddings on lexical datasets instead of sentences."""
+
+    @property
+    def required_layers(self) -> set[str]:
+        return set()
+
+    def evaluate(self, gold: list[Doc], predicted: list[Doc]) -> TaskResult:
+        raise TypeError("Lexical tasks are evaluated with evaluate_lexical().")
+
+    @abstractmethod
+    def evaluate_lexical(self, items: list, model: Any) -> TaskResult:
+        """Evaluates an embedding backend on the items of a lexical dataset."""
+
+
 EMPTY_PREDICTION: str = "<empty>"
 
 

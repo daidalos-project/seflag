@@ -4,18 +4,19 @@ By default, backends run in the current Python environment. If a backend needs p
 others (e.g. a different flair version), the model section can name a ``launcher``:
 
 * ``requirements`` (easiest): SEFLAG starts the backend with ``uv run --with ...``. uv creates a separate,
-  cached environment with SEFLAG and these packages on first use; the current environment is not changed.
-  Requires uv (https://docs.astral.sh/uv/).
-* ``command``: any command that starts a Python interpreter with SEFLAG installed, e.g. a conda environment
+  cached environment with the seflag package and these packages on first use; the current environment is not
+  changed. Requires uv (https://docs.astral.sh/uv/).
+* ``command``: any command that starts a Python interpreter with the seflag package installed, e.g. a conda env
   you created yourself: ``[conda, run, --no-capture-output, -n, seflag-flair, python]``.
 
 SEFLAG appends ``-m seflag.worker <request> <output>`` to the command (see :mod:`seflag.worker`). The request
 and output live in a temporary directory, and results record the command and the launched environment's
 package versions.
 
-Other tools work the same way, as long as the command ends in a Python interpreter with SEFLAG installed.
+Other tools work the same way, as long as the command ends in a Python interpreter with the seflag package
+installed.
 Docker, for example, can in principle run a backend with non-Python dependencies such as Morpheus, from an
-image you build yourself with SEFLAG and Morpheus inside. The temporary directory must be mounted at the same
+image you build yourself with the seflag package and Morpheus inside. The temporary directory must be mounted at the same
 path (shown for Linux, where it is under /tmp), and ``path`` refers to the location inside the container::
 
     model:
@@ -31,6 +32,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import sys
 from importlib.metadata import PackageNotFoundError, distribution
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -41,10 +43,11 @@ from seflag.errors import MissingDependencyError
 class LauncherSpec(BaseModel):
     model_config = ConfigDict(extra="forbid")
     requirements: list[str] | None = Field(
-        None, description="Run the backend via uv in a separate environment with SEFLAG and these packages.")
-    python: str | None = Field(None, description="Python version for the uv environment, e.g. '3.11'.")
+        None, description="Run the backend via uv in a separate environment with the seflag package and these packages.")
+    python: str | None = Field(
+        None, description="Python version for the uv environment, e.g. '3.12' (default: that of the current Python).")
     command: list[str] | None = Field(
-        None, description="Command that starts a Python interpreter with SEFLAG installed, e.g. conda run ... python.")
+        None, description="Command that starts a Python interpreter with the seflag package installed, e.g. conda run ... python.")
 
     @model_validator(mode="after")
     def _one_mode(self) -> LauncherSpec:
@@ -58,7 +61,7 @@ class LauncherSpec(BaseModel):
 
 
 def seflag_requirement() -> tuple[str, bool]:
-    """How the running SEFLAG can be installed elsewhere: (requirement or local path, editable)."""
+    """How the running seflag package can be installed elsewhere: (requirement or local path, editable)."""
     from seflag import __version__
 
     try:
@@ -83,9 +86,10 @@ def python_command(spec: LauncherSpec) -> list[str]:
             "'launcher.requirements' runs the backend with uv, which is not installed. Install it "
             "(https://docs.astral.sh/uv/getting-started/installation/) or use 'launcher.command' instead.")
     seflag_req, editable = seflag_requirement()
-    command: list[str] = [uv, "run", "--no-project", "--isolated"]
-    if spec.python:
-        command += ["--python", spec.python]
+    # same Python version as the current process unless requested otherwise: uv would otherwise pick the newest
+    # one available, for which older packages (e.g. spaCy 3.7 models) may have no wheels
+    python: str = spec.python or f"{sys.version_info.major}.{sys.version_info.minor}"
+    command: list[str] = [uv, "run", "--no-project", "--isolated", "--python", python]
     command += ["--with-editable" if editable else "--with", seflag_req]
     for requirement in spec.requirements or []:
         command += ["--with", requirement]

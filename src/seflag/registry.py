@@ -2,7 +2,7 @@
 
 Built-in components are listed here as import strings, so heavy optional dependencies
 (e.g. ``datasets``, ``flair``) are only imported when a config actually uses them.
-Third-party packages can add components without touching seflag by declaring entry points
+Third-party packages can add components without changing SEFLAG by declaring entry points
 in their own ``pyproject.toml``::
 
     [project.entry-points."seflag.backends"]
@@ -22,12 +22,15 @@ BUILTINS: dict[str, dict[str, str]] = {
         "conllu": "seflag.data.conllu:ConlluDataset",
         "huggingface": "seflag.data.huggingface:HuggingFaceDataset",
         "columns": "seflag.data.columns:ColumnsDataset",
+        "word_pairs": "seflag.data.lexical:WordPairsDataset",
+        "word_choices": "seflag.data.lexical:WordChoicesDataset",
     },
     "backends": {
         "spacy": "seflag.backends.spacy:SpacyBackend",
         "transformers": "seflag.backends.transformers:TransformersBackend",
         "flair": "seflag.backends.flair:FlairBackend",
         "morpheus": "seflag.backends.morpheus:MorpheusBackend",
+        "gensim": "seflag.backends.embeddings:GensimBackend",
     },
     "tasks": {
         "lemmatization": "seflag.tasks.lemmatization:LemmatizationTask",
@@ -35,6 +38,9 @@ BUILTINS: dict[str, dict[str, str]] = {
         "morphology": "seflag.tasks.morphology:MorphologyTask",
         "dependency_parsing": "seflag.tasks.dependency_parsing:DependencyParsingTask",
         "ner": "seflag.tasks.ner:NerTask",
+        "word_similarity": "seflag.tasks.embeddings:WordSimilarityTask",
+        "word_retrieval": "seflag.tasks.embeddings:WordRetrievalTask",
+        "synonym_selection": "seflag.tasks.embeddings:SynonymSelectionTask",
     },
 }
 

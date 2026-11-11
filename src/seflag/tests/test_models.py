@@ -86,3 +86,17 @@ def test_morpheus(config_name, expected):
         pytest.skip("Morpheus not installed (set MORPHEUS_PATH)")
     assert run(load_config(EXAMPLES / config_name, output={"dir": None})).metrics["accuracy"] == \
         pytest.approx(expected, abs=5e-4)
+
+
+@pytest.mark.parametrize("config_name, overrides, metric, expected", [
+    ("agree_similarity_grc_fasttext.yaml", {}, "spearman", 0.3805),
+    # the setup of the original SEFLAG script (gensim's evaluate_word_pairs defaults)
+    ("agree_similarity_grc_fasttext.yaml", {"model": {"max_vocabulary": 300000, "case_insensitive": True}},
+     "spearman", 0.3836),
+    ("agree_retrieval_grc_fasttext.yaml", {}, "hits_at_10", 0.0396),
+    ("lasla_synonyms_latin.yaml", {}, "accuracy", 0.8057),
+])
+def test_embeddings(config_name, overrides, metric, expected):
+    pytest.importorskip("gensim")
+    config = load_config(EXAMPLES / config_name, output={"dir": None}, **overrides)
+    assert run(config).metrics[metric] == pytest.approx(expected, abs=5e-4)

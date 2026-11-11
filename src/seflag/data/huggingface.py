@@ -49,7 +49,7 @@ class HuggingFaceDataset(DatasetAdapter):
     """A dataset on the Hugging Face Hub, in one of two formats.
 
     * ``conllu``: the repository contains CoNLL-U files, which are downloaded and parsed directly.
-    * ``table``: anything ``datasets.load_dataset`` can read, one row per sentence. Either seflag's own layout
+    * ``table``: anything ``datasets.load_dataset`` can read, one row per sentence. Either SEFLAG's own layout
       (``tokens`` = list of token dicts, see ``seflag convert-conllu``) or parallel list columns
       (``tokens``, ``lemmas``, ``upos``, ...; rename them via ``columns``).
 
@@ -162,7 +162,7 @@ class HuggingFaceDataset(DatasetAdapter):
             ner_decoder = inner.int2str if inner is not None and hasattr(inner, "int2str") else None
         for row in ds:
             tokens_value: list = row[token_column]
-            if tokens_value and isinstance(tokens_value[0], dict):  # seflag layout: list of token dicts
+            if tokens_value and isinstance(tokens_value[0], dict):  # SEFLAG layout: list of token dicts
                 yield SentenceRecord.from_dict({
                     **{k: v for k, v in row.items() if k in SEFLAG_SENTENCE_FIELDS},
                     "tokens": [{k: v for k, v in t.items() if k in TOKEN_FIELDS} for t in tokens_value],

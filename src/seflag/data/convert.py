@@ -1,8 +1,8 @@
-"""Conversion of local datasets into seflag's Parquet layout for the Hugging Face Hub.
+"""Conversion of local datasets into SEFLAG's Parquet layout for the Hugging Face Hub.
 
 The conversion is lossless (comments, multiword tokens, empty nodes, DEPS and MISC are kept) and is verified
 by converting the Parquet files back to CoNLL-U. Hub repositories may also simply contain CoNLL-U files
-(seflag reads them directly); Parquet adds the dataset viewer and fast loading via ``datasets``. Example::
+(SEFLAG reads them directly); Parquet adds the dataset viewer and fast loading via ``datasets``. Example::
 
     seflag convert-conllu data/ud/*.conllu --output build/ud_latin
     # inspect build/ud_latin, add a dataset card (README.md), then upload, e.g. with
@@ -62,7 +62,7 @@ def conllu_to_dataset_dict(paths: list[Path], default_split: str = "test"):
 
 
 def records_to_dataset(records: list[SentenceRecord]):
-    """Builds a ``datasets.Dataset`` in seflag's Parquet layout from any records."""
+    """Builds a ``datasets.Dataset`` in SEFLAG's Parquet layout from any records."""
     return _require_datasets().Dataset.from_list([r.to_dict() for r in records], features=features())
 
 
