@@ -1,6 +1,11 @@
 __pycache__/
+.conda/
 .idea/
+.vscode/
 .env
+data/conllu_data/
+gold_standards/
 word_embeddings/
 *.csv
 src/seflag/ARCHITECTURE.md
+table.md
