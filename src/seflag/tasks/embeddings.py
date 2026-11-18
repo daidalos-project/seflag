@@ -48,6 +48,7 @@ class WordSimilarityTask(LexicalTask):
     """Correlation between gold similarity/relatedness scores and the cosine similarity of word vectors."""
 
     description = "Word similarity/relatedness: Spearman and Pearson correlation with gold scores."
+    primary_metric = "spearman"
 
     class Config(BaseModel):
         model_config = ConfigDict(extra="forbid")
@@ -145,6 +146,7 @@ class SynonymSelectionTask(LexicalTask):
     """TOEFL-style multiple choice: the correct candidate must be strictly the most similar one to the target."""
 
     description = "Synonym selection (multiple choice): accuracy of picking the most similar candidate."
+    primary_metric = "accuracy"
 
     class Config(BaseModel):
         model_config = ConfigDict(extra="forbid")

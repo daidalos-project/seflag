@@ -1,0 +1,45 @@
+# Lemmatization of LatinCy, greCy and Morpheus on the test sets of all Latin and Ancient Greek UD 2.15 treebanks
+# (Hugging Face Hub), as one table: one row per model, one column per dataset. Models that are restricted to a
+# language are not run on the other one; Morpheus handles both. Each cell matches the single-evaluation examples
+# latincy_lemma_ud.yaml, grecy_lemma_ud.yaml and morpheus_lemma_ud_*.yaml.
+name: lemmatization-ud
+task: lemmatization
+matrix:
+  datasets:
+    - label: UD Latin
+      language: la
+      dataset:
+        source: huggingface
+        repo: daidalos-project/latin_treebanks_ud_test
+        revision: 14ab3708f8f55eaa700ac5828cb3351fe5346474   # pinned for reproducibility
+        split: test
+    - label: UD Ancient Greek
+      language: grc
+      dataset:
+        source: huggingface
+        repo: daidalos-project/ancient_greek_treebanks_ud_test
+        revision: b40a2b73e83317051e42b3cb19f90399a04f783f
+        split: test
+  models:
+    - label: LatinCy (la_core_web_lg)
+      language: la
+      model:
+        backend: spacy
+        name: la_core_web_lg
+        exclude: [morphologizer, parser, tagger, ner]
+    - label: greCy (grc_proiel_lg)
+      language: grc
+      model:
+        backend: spacy
+        name: grc_proiel_lg
+        exclude: [morphologizer, parser, tagger]
+    - label: Morpheus
+      model:
+        backend: morpheus
+        unknown: empty           # unanalysable words count as errors
+      options:
+        label_normalization: [strip_homonym_digits]   # Morpheus marks homonyms with numbers ('sum1')
+  table:
+    by_subset: false   # true: one column per treebank
+    percent: true
+    digits: 2

@@ -27,6 +27,8 @@ class Task(ABC):
         model_config = ConfigDict(extra="forbid")
 
     description: ClassVar[str] = ""
+    # headline metric, e.g. for the tables of evaluation matrices; None: the first numeric metric
+    primary_metric: ClassVar[str | None] = None
 
     def __init__(self, config: Any, options: EvaluationOptions):
         self.config = config
@@ -71,6 +73,7 @@ class TokenLabelTask(Task):
     """
 
     normalize_labels: ClassVar[bool] = True
+    primary_metric = "accuracy"
 
     @abstractmethod
     def label(self, token: Token) -> str:

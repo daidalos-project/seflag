@@ -73,6 +73,7 @@ class MorphologyTask(Task):
     """
 
     description = "Morphological features (UD FEATS): full-set accuracy (UFeats), feature=value and per-feature P/R/F1."
+    primary_metric = "accuracy"
 
     class Config(BaseModel):
         model_config = ConfigDict(extra="forbid")

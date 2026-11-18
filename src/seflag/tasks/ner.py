@@ -47,6 +47,7 @@ class NerTask(Task):
     """
 
     description = "Named entity recognition: entity-level P/R/F1 (exact match), per label, unlabelled, token level."
+    primary_metric = "f1"
 
     class Config(BaseModel):
         model_config = ConfigDict(extra="forbid")

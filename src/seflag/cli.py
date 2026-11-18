@@ -1,4 +1,5 @@
-"""Command line interface: ``seflag run``, ``list``, ``convert-conllu``, ``export`` and ``cache``."""
+"""Command line interface: ``seflag run`` (single evaluations and matrices), ``list``, ``convert-conllu``,
+``export`` and ``cache``."""
 
 from __future__ import annotations
 
@@ -13,6 +14,7 @@ from seflag.errors import SeflagError
 
 def _cmd_run(args: argparse.Namespace) -> int:
     from seflag.config import load_config
+    from seflag.matrix import is_matrix, load_matrix, run_matrix
     from seflag.runner import run
 
     overrides: dict = {}
@@ -22,12 +24,20 @@ def _cmd_run(args: argparse.Namespace) -> int:
         overrides["output"] = {"dir": str(Path(args.output).resolve())}
     if args.no_save:
         overrides["output"] = {"dir": None}
+    status: int = 0
     for path in args.configs:
+        if is_matrix(path):
+            matrix = run_matrix(load_matrix(path, **overrides), fail_fast=args.fail_fast)
+            print(f"{matrix.name}\n\n{matrix.table()}")
+            if matrix.path:
+                print(f"  -> {matrix.path}")
+            status = status or (1 if matrix.failed else 0)
+            continue
         result = run(load_config(path, **overrides))
         print(result.summary())
         if result.path:
             print(f"  -> {result.path}")
-    return 0
+    return status
 
 
 def _cmd_list(args: argparse.Namespace) -> int:
@@ -162,10 +172,12 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_run = sub.add_parser("run", help="Run one or more evaluations from configuration files.")
-    p_run.add_argument("configs", nargs="+", help="YAML configuration file(s).")
+    p_run.add_argument("configs", nargs="+", help="YAML configuration file(s), single evaluations or matrices.")
     p_run.add_argument("--max-sentences", type=int, help="Override options.max_sentences (quick test runs).")
     p_run.add_argument("--output", help="Override output.dir.")
     p_run.add_argument("--no-save", action="store_true", help="Do not write result files.")
+    p_run.add_argument("--fail-fast", action="store_true",
+                       help="Matrices: stop at the first failing cell instead of reporting it in the table.")
     p_run.set_defaults(func=_cmd_run)
 
     p_list = sub.add_parser("list", help="List available tasks, dataset sources, backends and normalizers.")

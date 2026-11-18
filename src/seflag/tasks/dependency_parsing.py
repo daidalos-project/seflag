@@ -91,6 +91,7 @@ class DependencyParsingTask(Task):
     """Dependency parsing with the CoNLL 2018 metrics on gold tokenization and (by default) gold sentences."""
 
     description = "Dependency parsing: UAS, LAS, CLAS, MLAS, BLEX (CoNLL 2018 definitions), per-relation scores."
+    primary_metric = "las"
 
     class Config(BaseModel):
         model_config = ConfigDict(extra="forbid")
