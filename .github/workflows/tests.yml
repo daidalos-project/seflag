@@ -1,0 +1,33 @@
+name: tests
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+
+jobs:
+  core:
+    # the seflag package without optional extras; tests for missing extras and models skip themselves
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install ".[test]"
+      - run: pytest -q
+
+  extras:
+    # lightweight extras: Hub datasets, Morpheus (beta code; the build test uses make), word embeddings
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install ".[test,hf,morpheus,embeddings]"
+      - run: pytest -q

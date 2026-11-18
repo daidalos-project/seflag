@@ -73,3 +73,24 @@ def test_cache_info_and_purge(tmp_path, monkeypatch, capsys):
     assert main(["cache", "purge"]) == 0 and not (tmp_path / "downloads").exists()
     assert not (tmp_path / "tools").exists()
     assert "1 downloaded file(s) and morpheus-1.0.3, freed 3.0 KB" in capsys.readouterr().out
+
+
+def test_relative_output_dir_is_relative_to_working_directory(tmp_path, conllu_dir, fake_backend, monkeypatch):
+    import yaml
+
+    from seflag.matrix import load_matrix, run_matrix
+
+    configs = tmp_path / "configs"  # e.g. the examples inside an installed (read-only) package
+    configs.mkdir()
+    data = {"language": "la", "task": "lemmatization", "dataset": {"source": "conllu", "path": "../data"},
+            "model": {"backend": fake_backend}, "output": {"dir": "results"}}
+    (configs / "eval.yaml").write_text(yaml.safe_dump(data), encoding="utf-8")
+    (configs / "matrix.yaml").write_text(yaml.safe_dump({**data, "matrix": {}}), encoding="utf-8")
+    work = tmp_path / "work"
+    work.mkdir()
+    monkeypatch.chdir(work)
+    result = run(load_config(configs / "eval.yaml"))  # dataset path: relative to the config file
+    assert result.path.parent == work / "results"
+    matrix = run_matrix(load_matrix(configs / "matrix.yaml"))
+    assert matrix.path.parent == work / "results"
+    assert not (configs / "results").exists()

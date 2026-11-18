@@ -20,5 +20,8 @@ dataset:
 model:
   backend: gensim
   url: https://embeddings.lila-erc.eu/samples/download/fasttext/allLASLA-lemmi-fast-100-CBOW-win10-min5.bin
-  checksum: sha256:f7c58c68d9a2bff7f28a95a0a807713fbb42c9bd7fad6146fa48600dfb4122fd   # computed by us; not published
+  # byte-identical to fasttext/allLASLA-lemmi-fast-100-CBOW-win10-min5.bin in the archival release
+  # "Lemma Embeddings for Latin" (CLARIN-IT, http://hdl.handle.net/20.500.11752/OPEN-996, CC BY-NC-SA 4.0),
+  # whose archive (LemmaEmbeddingsForLatin.tgz, 9.8 GB) contains all 24 LiLa lemma embedding models
+  checksum: sha256:f7c58c68d9a2bff7f28a95a0a807713fbb42c9bd7fad6146fa48600dfb4122fd
   format: fasttext

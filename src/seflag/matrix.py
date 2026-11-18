@@ -212,7 +212,7 @@ def load_matrix(source: str | Path | dict[str, Any], **overrides: Any) -> Matrix
     except ValidationError as e:
         raise ConfigError(f"Invalid 'output' section:\n{e}") from e
     if output_dir is not None:
-        output_dir = (base_dir / output_dir.expanduser()).resolve()
+        output_dir = output_dir.expanduser().resolve()  # relative to the working directory, like single runs
     return MatrixConfig(name=name, spec=spec, cells=cells, output_dir=output_dir, source=given)
 
 

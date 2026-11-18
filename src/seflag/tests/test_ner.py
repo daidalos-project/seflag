@@ -143,7 +143,7 @@ def test_null_mapping_drops_entities(evaluate):
 
 
 def test_columns_from_hub_repository(tmp_path, monkeypatch):
-    import huggingface_hub
+    huggingface_hub = pytest.importorskip("huggingface_hub")
 
     from seflag.data.columns import ColumnsDataset
 

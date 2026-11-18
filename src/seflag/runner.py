@@ -147,6 +147,7 @@ def run(config: EvaluationConfig) -> EvaluationResult:
     if config.output.dir is not None:
         stamp: str = result.provenance["timestamp"].replace(":", "").replace("+0000", "Z")
         file_name: str = re.sub(r"[^\w.-]+", "_", f"{result.name}_{stamp}") + ".json"
-        result.save(config.resolve_path(config.output.dir) / file_name)
+        # relative to the working directory, not to the configuration file (which may be installed read-only)
+        result.save(config.output.dir.expanduser().resolve() / file_name)
         logger.info("Results written to %s", result.path)
     return result

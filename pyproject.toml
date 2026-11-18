@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "seflag"
 dynamic = ["version"]
 description = "Systematic Evaluation Framework for NLP models and datasets in Latin and Ancient Greek"
-readme = "README.md"
+readme = "src/seflag/README.md"   # the root README.md documents the repository and its results
 requires-python = ">=3.10"
 license = "0BSD"
 license-files = ["LICENSE"]
@@ -16,7 +16,13 @@ authors = [
     ]
 keywords = ["nlp", "evaluation", "latin", "ancient-greek", "benchmark", "spacy"]
 classifiers = [
+    "Development Status :: 4 - Beta",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Operating System :: OS Independent",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
@@ -26,6 +32,7 @@ classifiers = [
 # spaCy is core because spaCy Doc/Token objects are SEFLAG's internal data model.
 dependencies = [
     "spacy>=3.7,<4",
+    "numpy>=1.21",   # imported by the core (embedding backends, loaded by the runner); also needed by spaCy
     "pydantic>=2.5",
     "pyyaml>=6",
 ]
@@ -45,6 +52,9 @@ seflag = "seflag.cli:main"
 
 [project.urls]
 Repository = "https://github.com/daidalos-project/seflag"
+Documentation = "https://github.com/daidalos-project/seflag/blob/main/src/seflag/README.md"
+Issues = "https://github.com/daidalos-project/seflag/issues"
+DOI = "https://doi.org/10.5281/zenodo.13951323"
 
 [tool.hatch.version]
 path = "src/seflag/__init__.py"

@@ -90,7 +90,10 @@ class EvaluationOptions(_Strict):
 
 
 class OutputOptions(_Strict):
-    dir: Path | None = Field(Path("seflag_results"), description="Where result files are written; null disables writing.")
+    dir: Path | None = Field(
+        Path("seflag_results"),
+        description="Where result files are written, relative to the current working directory (not to the "
+                    "configuration file); null disables writing.")
 
 
 class EvaluationConfig(_Strict):
@@ -102,7 +105,7 @@ class EvaluationConfig(_Strict):
     model: ModelSpec
     options: EvaluationOptions = Field(default_factory=EvaluationOptions)
     output: OutputOptions = Field(default_factory=OutputOptions)
-    # directory against which relative paths in the configuration are resolved; set by load_config()
+    # directory against which relative dataset/model paths in the configuration are resolved; set by load_config()
     base_dir: Path = Field(default_factory=Path.cwd, exclude=True)
 
     @model_validator(mode="before")
@@ -128,7 +131,8 @@ def load_config(source: str | Path | dict[str, Any], **overrides: Any) -> Evalua
     """Loads and validates an evaluation configuration.
 
     ``source`` is either a path to a YAML/JSON file or an already parsed dictionary. Relative paths
-    inside a configuration file are resolved relative to the directory of that file.
+    inside a configuration file are resolved relative to the directory of that file, except ``output.dir``,
+    which is relative to the current working directory.
     ``overrides`` replace top-level sections, e.g. ``load_config(path, options={"max_sentences": 10})``.
     """
     base_dir: Path = Path.cwd()

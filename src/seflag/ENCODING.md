@@ -216,6 +216,9 @@ The vocabulary has 381,105 types.
 
 ### LASLA fastText CBOW, dim. 100 (`allLASLA-lemmi-fast-100-CBOW-win10-min5`)
 
+Archived as part of "Lemma Embeddings for Latin" (CLARIN-IT, http://hdl.handle.net/20.500.11752/OPEN-996,
+CC BY-NC-SA 4.0); the file in that archive is byte-identical to the one downloaded from LiLa.
+
 The vocabulary consists of 11,327 lemmas: ASCII, lowercase, u/i spelling (no v, no j). This matches the synonym
 benchmark. Its coverage of 87.8% does not change under NFC, NFD, lowercasing or u/v normalization; the missing 12%
 are lexical gaps.
