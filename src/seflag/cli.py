@@ -108,37 +108,50 @@ def _human_size(size: float) -> str:
     return f"{size:.1f} GB"
 
 
+def _files(root: Path) -> list[Path]:
+    return [p for p in root.rglob("*") if p.is_file()] if root.is_dir() else []
+
+
 def _cmd_cache(args: argparse.Namespace) -> int:
     import shutil
 
-    from seflag.data.download import downloads_root
+    from seflag.data.download import downloads_root, seflag_home
 
     root: Path = downloads_root()
-    files: list[Path] = [p for p in root.rglob("*") if p.is_file()] if root.is_dir() else []
-    size: int = sum(p.stat().st_size for p in files)
+    files: list[Path] = _files(root)
+    tools_root: Path = seflag_home() / "tools"  # programs built by SEFLAG (Morpheus)
+    tools: list[Path] = sorted(p for p in tools_root.iterdir() if p.is_dir()) if tools_root.is_dir() else []
+    tool_files: list[Path] = _files(tools_root)
+    size: int = sum(p.stat().st_size for p in files + tool_files)
     if args.cache_command == "info":
         print(f"downloads: {root}")
-        print(f"  {len(files)} file(s), {_human_size(size)}")
+        print(f"  {len(files)} file(s), {_human_size(sum(p.stat().st_size for p in files))}")
         for path in sorted(files, key=lambda p: -p.stat().st_size)[:args.limit]:
             print(f"  {_human_size(path.stat().st_size):>9}  {path.name}")
+        print(f"tools: {tools_root}")
+        for tool in tools:
+            print(f"  {_human_size(sum(p.stat().st_size for p in _files(tool))):>9}  {tool.name}")
         print("Models and datasets from the Hugging Face Hub and environments created by uv are cached by those "
               "tools (see `hf cache` and `uv cache`).")
         return 0
     # purge
-    if not files:
-        print(f"nothing to delete in {root}")
+    if not files and not tools:
+        print(f"nothing to delete in {seflag_home()}")
         return 0
+    what: str = f"{len(files)} downloaded file(s)" + "".join(
+        f" and {t.name}" for t in tools if not t.name.startswith("."))  # hidden: unfinished builds
     if not args.yes:
         if not sys.stdin.isatty():
-            print(f"error: refusing to delete {len(files)} file(s) ({_human_size(size)}) in {root} without "
-                  "confirmation; pass --yes", file=sys.stderr)
+            print(f"error: refusing to delete {what} ({_human_size(size)}) without confirmation; pass --yes",
+                  file=sys.stderr)
             return 1
-        answer: str = input(f"Delete {len(files)} downloaded file(s) ({_human_size(size)}) in {root}? [y/N] ")
+        answer: str = input(f"Delete {what} ({_human_size(size)}) in {seflag_home()}? [y/N] ")
         if answer.strip().lower() not in ("y", "yes"):
             print("nothing deleted")
             return 0
-    shutil.rmtree(root)
-    print(f"deleted {len(files)} file(s), freed {_human_size(size)}; files are downloaded again when needed")
+    for directory in (root, tools_root):
+        shutil.rmtree(directory, ignore_errors=not directory.exists())
+    print(f"deleted {what}, freed {_human_size(size)}; everything is downloaded or rebuilt again when needed")
     return 0
 
 
@@ -171,11 +184,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_exp.add_argument("--split", default="test", help="Split name, i.e. the parquet file name (default: test).")
     p_exp.set_defaults(func=_cmd_export)
 
-    p_cache = sub.add_parser("cache", help="Show or delete files downloaded by URL (datasets, embedding models).")
+    p_cache = sub.add_parser("cache", help="Show or delete files downloaded by URL (datasets, embedding models) "
+                                           "and tools built by SEFLAG (Morpheus).")
     cache_sub = p_cache.add_subparsers(dest="cache_command", required=True)
     p_info = cache_sub.add_parser("info", help="Show location, size and the largest downloaded files.")
     p_info.add_argument("--limit", type=int, default=10, help="Number of files to list (default: 10).")
-    p_purge = cache_sub.add_parser("purge", help="Delete all downloaded files to free disk space.")
+    p_purge = cache_sub.add_parser("purge", help="Delete all downloaded files and built tools to free disk space.")
     p_purge.add_argument("-y", "--yes", action="store_true", help="Do not ask for confirmation.")
     p_cache.set_defaults(func=_cmd_cache)
 

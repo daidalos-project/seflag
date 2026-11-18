@@ -17,8 +17,13 @@ logger = logging.getLogger("seflag")
 CHECKSUM = re.compile(r"^(md5|sha1|sha256):([0-9a-f]+)$")
 
 
+def seflag_home() -> Path:
+    """SEFLAG's cache directory: $SEFLAG_HOME, default ~/.cache/seflag."""
+    return Path(os.environ.get("SEFLAG_HOME", Path.home() / ".cache" / "seflag")).expanduser()
+
+
 def downloads_root() -> Path:
-    return Path(os.environ.get("SEFLAG_HOME", Path.home() / ".cache" / "seflag")).expanduser() / "downloads"
+    return seflag_home() / "downloads"
 
 
 def file_checksum(path: Path, algorithm: str) -> str:

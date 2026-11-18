@@ -1,11 +1,13 @@
 """Morpheus (Perseus morphological analyser) as a lemmatizer for Ancient Greek and Latin.
 
-Morpheus is an external program: see https://github.com/perseids-tools/morpheus-perseids for installation.
-It analyses words out of context and may return several lemmas; ``select`` decides which one is used.
+Morpheus is an external program (https://github.com/perseids-tools/morpheus-perseids). If neither ``path`` nor
+$MORPHEUS_PATH points to an installation, SEFLAG downloads and compiles a pinned release on first use (see
+:mod:`seflag.backends.morpheus_install`). It analyses words out of context and may return several lemmas; ``select`` decides which one is used.
 """
 
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import unicodedata
@@ -17,6 +19,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from spacy.tokens import Doc
 from spacy.vocab import Vocab
 
+from seflag.backends import morpheus_install
 from seflag.backends.base import Backend
 from seflag.errors import ConfigError, MissingDependencyError, SeflagError
 
@@ -38,6 +41,10 @@ class MorpheusBackend(Backend):
         model_config = ConfigDict(extra="forbid")
         path: str | None = Field(
             None, description="Morpheus installation directory (with bin/ and stemlib/); default: $MORPHEUS_PATH.")
+        install: Literal["auto", "never"] = Field(
+            "auto", description=f"Without 'path' and $MORPHEUS_PATH: 'auto' downloads Morpheus "
+                                f"{morpheus_install.VERSION} and compiles it in SEFLAG's cache on first use (needs a C "
+                                f"compiler and make); 'never' raises an error instead.")
         language: Literal["auto", "grc", "la"] = Field("auto", description="'auto': the evaluation's language.")
         select: Literal["first", "last"] = Field("first", description="Which lemma to use if Morpheus returns several.")
         unknown: Literal["empty", "form"] = Field(
@@ -55,17 +62,26 @@ class MorpheusBackend(Backend):
             raise ConfigError(f"Morpheus supports Ancient Greek (grc) and Latin (la), not '{language}'.")
         self.language: str = language
         self.stats: dict[str, int] = {"words": 0, "unknown": 0, "ambiguous": 0}
+        self._root: Path | None = None
 
     @property
     def root(self) -> Path:
+        if self._root is None:
+            self._root = self._find_root()
+        return self._root
+
+    def _find_root(self) -> Path:
         path: str | None = self.config.path or os.environ.get("MORPHEUS_PATH")
-        if not path:
-            raise MissingDependencyError("Morpheus not configured: set 'path' or the MORPHEUS_PATH variable. "
-                                         "Installation: https://github.com/perseids-tools/morpheus-perseids")
-        root = Path(path).expanduser()
-        if not (root / "bin" / "morpheus").is_file():
-            raise MissingDependencyError(f"No Morpheus program at {root / 'bin' / 'morpheus'}")
-        return root
+        if path:
+            root = Path(path).expanduser()
+            if not (root / "bin" / "morpheus").is_file():
+                raise MissingDependencyError(f"No Morpheus program at {root / 'bin' / 'morpheus'}")
+            return root
+        if self.config.install == "never":
+            raise MissingDependencyError(
+                "Morpheus not configured: set 'path' or the MORPHEUS_PATH variable, or 'install: auto' to let SEFLAG "
+                "build it. Installation: https://github.com/perseids-tools/morpheus-perseids")
+        return morpheus_install.ensure_installed()
 
     def _to_input(self, word: str) -> str:
         if self.language == "la":
@@ -139,8 +155,13 @@ class MorpheusBackend(Backend):
         info: dict[str, Any] = {"name": "morpheus", "path": str(self.root), "language": self.language,
                                 "unique_words": self.stats["words"], "unknown_words": self.stats["unknown"],
                                 "ambiguous_words": self.stats["ambiguous"]}
+        marker = self.root / morpheus_install.MARKER
         head = self.root / ".git" / "HEAD"
-        if head.is_file():  # record the Morpheus version if it is a git checkout
+        if marker.is_file():  # built by SEFLAG
+            installation: dict[str, str] = json.loads(marker.read_text())
+            info.update(installed_by="seflag", version=installation["version"], source=installation["url"],
+                        source_checksum=installation["checksum"])
+        elif head.is_file():  # record the Morpheus version if it is a git checkout
             ref: str = head.read_text().strip()
             ref_file = self.root / ".git" / ref.removeprefix("ref: ") if ref.startswith("ref: ") else None
             info["git_commit"] = ref_file.read_text().strip() if ref_file and ref_file.is_file() else ref

@@ -1,17 +1,20 @@
+import hashlib
 import sys
+import tarfile
 import unicodedata
 
 import pytest
 import spacy
 
 from seflag import load_config, run
+from seflag.backends import morpheus_install
 from seflag.backends.morpheus import MorpheusBackend
 from seflag.errors import MissingDependencyError
 
 FAKE_MORPHEUS = '''#!{python}
 """Imitates Morpheus: no output for numbers, lowercased echo of unknown words, beta code lemmas."""
 import sys
-LEXICON = {{"amabat": ["amo"], "cano": ["cano", "canus"], "est": ["edo#1", "sum#1"],
+LEXICON = {{"amabat": ["amo"], "amo": ["amo"], "cano": ["cano", "canus"], "est": ["edo#1", "sum#1"],
            "lo/gos": ["lo/gos"], "kai\\\\": ["kai/"]}}
 print("<words>")
 for line in sys.stdin.read().split("\\n")[:-1]:
@@ -64,6 +67,51 @@ def test_morpheus_not_installed(monkeypatch, tmp_path):
     monkeypatch.setenv("MORPHEUS_PATH", str(tmp_path))
     with pytest.raises(MissingDependencyError, match="No Morpheus program"):
         morpheus_backend("la").predict([["x"]])
+
+
+def test_morpheus_install_never(monkeypatch):
+    monkeypatch.delenv("MORPHEUS_PATH", raising=False)
+    with pytest.raises(MissingDependencyError, match="install: auto"):
+        morpheus_backend("la", install="never").predict([["x"]])
+
+
+@pytest.fixture
+def morpheus_source(tmp_path, monkeypatch):
+    """A fake Morpheus source release whose makefiles 'build' the fake Morpheus script."""
+    top = tmp_path / "src" / f"morpheus-perseids-{morpheus_install.VERSION}"
+    (top / "stemlib" / "Latin").mkdir(parents=True)
+    for directory, target in morpheus_install.TARGETS:
+        (top / "src" / directory).mkdir(parents=True)
+        recipe = "cp fake.py $@ && chmod +x $@" if target == "morpheus" else "touch $@"
+        (top / "src" / directory / "makefile").write_text(f"{target}:\n\t{recipe}\n")
+    (top / "src" / "anal" / "fake.py").write_text(FAKE_MORPHEUS.format(python=sys.executable))
+    archive = tmp_path / "morpheus.tar.gz"
+    with tarfile.open(archive, "w:gz") as tar:
+        tar.add(top, arcname=top.name)
+    monkeypatch.setattr(morpheus_install, "URL", archive.as_uri())
+    monkeypatch.setattr(morpheus_install, "CHECKSUM", "sha256:" + hashlib.sha256(archive.read_bytes()).hexdigest())
+    monkeypatch.setenv("SEFLAG_HOME", str(tmp_path / "home"))
+    monkeypatch.delenv("MORPHEUS_PATH", raising=False)
+    return archive
+
+
+def test_morpheus_auto_install(morpheus_source, monkeypatch):
+    backend = morpheus_backend("la")
+    assert [t.lemma_ for t in backend.predict([["cano", "est"]])[0]] == ["cano", "edo#1"]
+    metadata = backend.metadata()
+    assert metadata["installed_by"] == "seflag" and metadata["version"] == morpheus_install.VERSION
+    root = morpheus_install.install_dir()
+    assert metadata["path"] == str(root) and not (root / "src").exists()
+    # the installation is reused: no second download
+    monkeypatch.setattr(morpheus_install, "download", lambda *a: pytest.fail("downloaded again"))
+    assert morpheus_backend("la").predict([["cano"]])[0][0].lemma_ == "cano"
+
+
+def test_morpheus_auto_install_needs_build_tools(morpheus_source, monkeypatch):
+    monkeypatch.setattr(morpheus_install.shutil, "which", lambda tool: None if tool == "make" else "/usr/bin/" + tool)
+    with pytest.raises(MissingDependencyError, match="needs make"):
+        morpheus_backend("la").predict([["x"]])
+    assert morpheus_install.installed() is None
 
 
 # --- transformers -------------------------------------------------------------------------------------------

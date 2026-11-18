@@ -15,7 +15,8 @@ package versions.
 
 Other tools work the same way, as long as the command ends in a Python interpreter with the seflag package
 installed.
-Docker, for example, can in principle run a backend with non-Python dependencies such as Morpheus, from an
+Docker, for example, can in principle run a backend with non-Python dependencies such as Morpheus (which SEFLAG
+otherwise builds itself on Linux and macOS, see :mod:`seflag.backends.morpheus_install`), from an
 image you build yourself with the seflag package and Morpheus inside. The temporary directory must be mounted at the same
 path (shown for Linux, where it is under /tmp), and ``path`` refers to the location inside the container::
 

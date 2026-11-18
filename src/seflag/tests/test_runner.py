@@ -57,9 +57,12 @@ def test_cache_info_and_purge(tmp_path, monkeypatch, capsys):
     downloads = tmp_path / "downloads" / "abc"
     downloads.mkdir(parents=True)
     (downloads / "model.bin").write_bytes(b"x" * 2048)
+    tool = tmp_path / "tools" / "morpheus-1.0.3" / "bin"
+    tool.mkdir(parents=True)
+    (tool / "morpheus").write_bytes(b"x" * 1024)
     assert main(["cache", "info"]) == 0
     out = capsys.readouterr().out
-    assert "1 file(s), 2.0 KB" in out and "model.bin" in out
+    assert "1 file(s), 2.0 KB" in out and "model.bin" in out and "1.0 KB  morpheus-1.0.3" in out
     monkeypatch.setattr("sys.stdin.isatty", lambda: False)
     assert main(["cache", "purge"]) == 1  # no confirmation possible -> nothing deleted
     assert (downloads / "model.bin").exists()
@@ -68,4 +71,5 @@ def test_cache_info_and_purge(tmp_path, monkeypatch, capsys):
     assert main(["cache", "purge"]) == 0 and (downloads / "model.bin").exists()
     monkeypatch.setattr("builtins.input", lambda prompt: "y")
     assert main(["cache", "purge"]) == 0 and not (tmp_path / "downloads").exists()
-    assert "freed 2.0 KB" in capsys.readouterr().out
+    assert not (tmp_path / "tools").exists()
+    assert "1 downloaded file(s) and morpheus-1.0.3, freed 3.0 KB" in capsys.readouterr().out

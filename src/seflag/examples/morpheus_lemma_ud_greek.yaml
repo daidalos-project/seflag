@@ -1,6 +1,7 @@
 # Morpheus lemmatization on the test sets of all Ancient Greek UD 2.15 treebanks (Hugging Face Hub).
 # Morpheus analyses words out of context; with several candidate lemmas, the first one is used.
-# Requires a local Morpheus installation (path below or $MORPHEUS_PATH).
+# Uses $MORPHEUS_PATH (or model.path) if set; otherwise SEFLAG builds Morpheus in its cache on first use
+# (needs a C compiler and make; not on Windows).
 name: morpheus-lemma-ud-greek
 language: grc
 task: lemmatization
