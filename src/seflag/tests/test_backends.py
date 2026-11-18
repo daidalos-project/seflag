@@ -15,7 +15,7 @@ FAKE_MORPHEUS = '''#!{python}
 """Imitates Morpheus: no output for numbers, lowercased echo of unknown words, beta code lemmas."""
 import sys
 LEXICON = {{"amabat": ["amo"], "amo": ["amo"], "cano": ["cano", "canus"], "est": ["edo#1", "sum#1"],
-           "lo/gos": ["lo/gos"], "kai\\\\": ["kai/"]}}
+           "lo/gos": ["lo/gos"], "kai\\\\": ["kai/"], "d'": ["de/"], "par'": ["para/"]}}
 print("<words>")
 for line in sys.stdin.read().split("\\n")[:-1]:
     if line.isdigit():
@@ -61,6 +61,13 @@ def test_morpheus_greek_betacode_and_nfc(morpheus):
     assert lemmas == ["λόγος", "καί"]
     assert all(unicodedata.is_normalized("NFC", lemma) for lemma in lemmas)
     assert "ί" not in lemmas[1]  # no oxia: tonos as in UD
+
+
+def test_morpheus_greek_input_nfc_and_elision(morpheus):
+    pytest.importorskip("betacode")
+    # NFD input and every elision mark (incl. UD Perseus' U+0313 and its ρ + U+0313 merged into ῤ by NFC)
+    words = [unicodedata.normalize("NFD", "λόγος"), "δ\u0313", "δ\u1fbf", "δ\u1fbd", "δ\u02bc", "πα\u1fe4"]
+    assert [t.lemma_ for t in morpheus_backend("grc").predict([words])[0]] == ["λόγος", "δέ", "δέ", "δέ", "δέ", "παρά"]
 
 
 def test_morpheus_not_installed(monkeypatch, tmp_path):

@@ -57,6 +57,10 @@ class EmbeddingBackend(ABC):
     def metadata(self) -> dict[str, Any]:
         return {}
 
+    def vocabulary(self) -> list[str] | None:
+        """The vocabulary entries, for inspecting their encoding (``seflag inspect-encoding``); None if unknown."""
+        return None
+
 
 class GensimBackend(EmbeddingBackend):
     """Embeddings in the formats gensim reads: fastText ``.bin``, word2vec binary/text (``.bin``/``.vec``),
@@ -131,6 +135,9 @@ class GensimBackend(EmbeddingBackend):
             else:
                 self._keys = {w: w for w in entries}
         return self._keys
+
+    def vocabulary(self) -> list[str]:
+        return list(self.kv.index_to_key[:self.config.max_vocabulary])
 
     def key(self, word: str) -> str | None:
         # not `word in kv`: fastText vectors claim every word, because they can build vectors from n-grams

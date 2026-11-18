@@ -1,5 +1,5 @@
 """Command line interface: ``seflag run`` (single evaluations and matrices), ``list``, ``convert-conllu``,
-``export`` and ``cache``."""
+``export``, ``inspect-encoding`` and ``cache``."""
 
 from __future__ import annotations
 
@@ -110,6 +110,66 @@ def _cmd_export(args: argparse.Namespace) -> int:
     return 0
 
 
+def _inspect_targets(path: str, with_model: bool) -> list[tuple[str, str, object]]:
+    """(kind, label, component instance) for the dataset(s) and, if requested, model(s) of a configuration file."""
+    from seflag.config import load_config, validate_component_params
+    from seflag.matrix import is_matrix, load_matrix
+
+    configs = [(f"{c.dataset} × {c.model}", c.config) for c in load_matrix(path).cells if c.config] \
+        if is_matrix(path) else [("", load_config(path))]
+    targets: list[tuple[str, str, object]] = []
+    seen: set[str] = set()
+    for _, config in configs:
+        dataset_key: str = f"dataset {config.dataset.source} {config.dataset.params}"
+        if dataset_key not in seen:
+            seen.add(dataset_key)
+            component = registry.get("datasets", config.dataset.source)
+            label: str = str(config.dataset.params.get("repo") or config.dataset.params.get("path")
+                             or config.dataset.params.get("url") or config.dataset.source)
+            targets.append(("dataset", f"{label} ({config.language})",
+                            component(validate_component_params(component, config.dataset.params, "dataset"), config)))
+        model_key: str = f"model {config.model.backend} {config.model.params}"
+        if with_model and model_key not in seen:
+            seen.add(model_key)
+            component = registry.get("backends", config.model.backend)
+            label = str(config.model.params.get("name") or config.model.params.get("url") or config.model.backend)
+            targets.append(("model", f"{label} ({config.model.backend})",
+                            component(validate_component_params(component, config.model.params, "model"), config)))
+    return targets
+
+
+def _cmd_inspect_encoding(args: argparse.Namespace) -> int:
+    import json
+
+    from seflag.backends.embeddings import EmbeddingBackend
+    from seflag.encoding import analyse, inspect_dataset
+
+    report: list[dict] = []
+    for path in args.configs:
+        for kind, label, component in _inspect_targets(path, args.model):
+            if kind == "dataset":
+                stats = inspect_dataset(component, by_subset=args.by_subset, max_sentences=args.max_sentences)
+            else:
+                vocabulary = component.vocabulary() if isinstance(component, EmbeddingBackend) else None
+                if vocabulary is None:
+                    print(f"== {path}: model {label}: vocabulary inspection is only available for embedding "
+                          "backends; see ENCODING.md for how other models were examined", file=sys.stderr)
+                    continue
+                stats = {"": {"vocabulary": analyse(vocabulary)}}
+            report.append({"config": path, "kind": kind, "label": label,
+                           "subsets": {s: {f: v.to_dict() for f, v in fields.items()} for s, fields in stats.items()}})
+            if args.json:
+                continue
+            print(f"== {path}: {kind} {label}")
+            for subset, fields in stats.items():
+                for name, values in fields.items():
+                    print(f"[{subset or 'all'}] {name}")
+                    print("\n".join(values.format()))
+    if args.json:
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+    return 0
+
+
 def _human_size(size: float) -> str:
     for unit in ("B", "KB", "MB", "GB"):
         if size < 1024 or unit == "GB":
@@ -195,6 +255,16 @@ def build_parser() -> argparse.ArgumentParser:
     p_exp.add_argument("--output", required=True, help="Output directory (parquet file goes to OUTPUT/data/).")
     p_exp.add_argument("--split", default="test", help="Split name, i.e. the parquet file name (default: test).")
     p_exp.set_defaults(func=_cmd_export)
+
+    p_enc = sub.add_parser("inspect-encoding",
+                           help="Report how the strings of a configuration's dataset (and embedding vocabulary) are "
+                                "encoded: normalization form, elision marks, sigma variants, u/v, case, ...")
+    p_enc.add_argument("configs", nargs="+", help="YAML configuration file(s), single evaluations or matrices.")
+    p_enc.add_argument("--by-subset", action="store_true", help="Also report each subset (e.g. treebank) separately.")
+    p_enc.add_argument("--model", action="store_true", help="Also inspect the vocabulary of embedding models.")
+    p_enc.add_argument("--max-sentences", type=int, help="Only inspect the first N sentences or items.")
+    p_enc.add_argument("--json", action="store_true", help="Print the full statistics as JSON.")
+    p_enc.set_defaults(func=_cmd_inspect_encoding)
 
     p_cache = sub.add_parser("cache", help="Show or delete files downloaded by URL (datasets, embedding models) "
                                            "and tools built by SEFLAG (Morpheus).")

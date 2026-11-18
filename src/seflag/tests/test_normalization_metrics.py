@@ -36,3 +36,28 @@ def test_metrics():
     assert top_errors(gold, pred, 1) == [{"gold": "A", "predicted": "B", "count": 1}]
     with pytest.raises(ValueError):
         accuracy(["A"], [])
+
+
+@pytest.mark.parametrize("text, expected", [
+    ("δ’", "δʼ"),                        # δ’ (UD PROIEL)
+    ("ἀλλ̓", "ἀλλʼ"),  # ἀλλ̓ (UD Perseus)
+    ("ἐπ᾿", "ἐπʼ"),            # ἐπ᾿ (UD PTNK)
+    ("δι᾽", "διʼ"),            # δι᾽: elided words can end in a vowel
+    ("δύ̓", "δύʼ"),            # δύ̓
+    ("παῤ", "παρʼ"),      # παῤ: NFC merged ρ + U+0313 (UD Perseus)
+    (unicodedata.normalize("NFD", "οὐ"), unicodedata.normalize("NFD", "οὐ")),  # breathing
+    ("ῤ", "ῤ"), ("’", "’"), ("l'", "l'"), ("κ᾽ἀγώ", "κ᾽ἀγώ"),
+])
+def test_elision_normalizer(text, expected):
+    assert get_pipeline(["elision_to_u02bc"])(text) == expected
+
+
+def test_elision_targets_and_sigma_normalizers():
+    assert get_pipeline(["elision_to_u2019"])("δʼ") == "δ’"
+    assert get_pipeline(["elision_to_apostrophe"])("δ̓") == "δ'"
+    final = get_pipeline(["final_sigma"])
+    assert [final(w) for w in ["δοκεῖσ", "σ", "Σ", "abs"]] == ["δοκεῖς", "σ", "Σ", "abs"]
+    assert final(unicodedata.normalize("NFD", "λόγοσ")) == unicodedata.normalize("NFD", "λόγος")
+    lunate = get_pipeline(["lunate_sigma"])
+    assert [lunate(w) for w in ["ϲοφίαϲ", "Ϲω", "διόC", "Cωκράτηϲ", "Caesar", "c"]] == \
+        ["σοφίας", "Σω", "διός", "Σωκράτης", "Caesar", "c"]

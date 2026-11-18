@@ -2,7 +2,9 @@
 
 Morpheus is an external program (https://github.com/perseids-tools/morpheus-perseids). If neither ``path`` nor
 $MORPHEUS_PATH points to an installation, SEFLAG downloads and compiles a pinned release on first use (see
-:mod:`seflag.backends.morpheus_install`). It analyses words out of context and may return several lemmas; ``select`` decides which one is used.
+:mod:`seflag.backends.morpheus_install`). It analyses words out of context and may return several lemmas;
+``select`` decides which one is used. Greek input is NFC-normalized, and elision marks of all kinds become beta
+code ``'``.
 """
 
 from __future__ import annotations
@@ -22,6 +24,9 @@ from spacy.vocab import Vocab
 from seflag.backends import morpheus_install
 from seflag.backends.base import Backend
 from seflag.errors import ConfigError, MissingDependencyError, SeflagError
+from seflag.normalization import elision_to
+
+_ELISION_TO_APOSTROPHE = elision_to("'")
 
 
 def _betacode():
@@ -86,6 +91,9 @@ class MorpheusBackend(Backend):
     def _to_input(self, word: str) -> str:
         if self.language == "la":
             return word
+        # betacode only converts precomposed characters (NFD input would stay unconverted) and only U+2019/U+0027
+        # as the elision mark (beta code '); U+1FBE becomes ι under NFC (see ENCODING.md)
+        word = _ELISION_TO_APOSTROPHE(unicodedata.normalize("NFC", word))
         beta: str = _betacode().uni_to_beta(word)
         return beta.replace("s1", "s").replace("s2", "s").replace("s3", "s")
 
