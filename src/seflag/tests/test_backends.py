@@ -9,7 +9,7 @@ import spacy
 from seflag import load_config, run
 from seflag.backends import morpheus_install
 from seflag.backends.morpheus import MorpheusBackend
-from seflag.errors import MissingDependencyError
+from seflag.errors import MissingDependencyError, SeflagError
 
 FAKE_MORPHEUS = '''#!{python}
 """Imitates Morpheus: no output for numbers, lowercased echo of unknown words, beta code lemmas."""
@@ -209,6 +209,20 @@ def test_transformers_backend_aligns_words_and_windows(tiny_token_classifier):
     assert backend.label_inventory("entities") == {"PER", "LOC"}
 
 
+def test_retokenizing_component_is_named(tmp_path, conllu_dir):
+    """Pipelines must keep the gold tokens; the error names the component that changes them."""
+    nlp = spacy.blank("la")
+    nlp.add_pipe("entity_ruler").add_patterns([{"label": "PER", "pattern": [{"ORTH": "Arma"}, {"ORTH": "virum"}]}])
+    nlp.add_pipe("merge_entities")
+    nlp.to_disk(tmp_path / "model")
+    data = {"language": "la", "task": "lemmatization", "output": {"dir": None},
+            "dataset": {"source": "conllu", "path": str(conllu_dir)},
+            "model": {"backend": "spacy", "name": str(tmp_path / "model")}}
+    with pytest.raises(SeflagError, match=r"in its component 'merge_entities'\. Add it to 'exclude'"):
+        run(load_config(data))
+    run(load_config({**data, "model": {**data["model"], "exclude": ["merge_entities"]}}))
+
+
 # --- isolated execution -------------------------------------------------------------------------------------
 
 @pytest.fixture
@@ -233,8 +247,6 @@ def test_launched_backend_matches_in_process(rule_model, conllu_dir):
 
 
 def test_launched_backend_failure_is_reported(rule_model, conllu_dir):
-    from seflag.errors import SeflagError
-
     config = load_config({"language": "la", "task": "lemmatization", "output": {"dir": None},
                           "dataset": {"source": "conllu", "path": str(conllu_dir)},
                           "model": {"backend": "spacy", "name": str(rule_model / "missing"),

@@ -27,6 +27,8 @@ from seflag.runner import EvaluationResult, run
 from seflag.matrix import MatrixResult, load_matrix, run_matrix, table_from_results
 from seflag.components import load_backend, load_dataset
 from seflag.registry import register
+from seflag.enums import BackendName, ComponentKind, DatasetSource, Language, Layer, Normalizer, TaskType, Upos
 
-__all__ = ["EvaluationConfig", "EvaluationResult", "MatrixResult", "__version__", "load_backend", "load_config",
+__all__ = ["BackendName", "ComponentKind", "DatasetSource", "EvaluationConfig", "EvaluationResult", "Language", "Layer",
+           "MatrixResult", "Normalizer", "TaskType", "Upos", "__version__", "load_backend", "load_config",
            "load_dataset", "load_matrix", "register", "run", "run_matrix", "table_from_results"]

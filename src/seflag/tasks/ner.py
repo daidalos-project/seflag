@@ -8,6 +8,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 from spacy.tokens import Doc
 
+from seflag.enums import Layer
 from seflag.metrics import classification_report
 from seflag.tasks.base import Task, TaskResult
 
@@ -63,11 +64,11 @@ class NerTask(Task):
         self.model_labels: set[str] | None = None
 
     @property
-    def required_layers(self) -> set[str]:
-        return {"entities"}
+    def required_layers(self) -> set[Layer]:
+        return {Layer.ENTITIES}
 
     def bind_backend(self, backend: Any) -> None:
-        self.model_labels = backend.label_inventory("entities")
+        self.model_labels = backend.label_inventory(Layer.ENTITIES)
 
     def _entities(self, doc: Doc, mapping: dict[str, str | None], raw: Counter) -> set[Entity]:
         result: set[Entity] = set()

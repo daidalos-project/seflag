@@ -10,4 +10,4 @@ word_embeddings/
 table.md
 data/conllu_data/
 src/seflag/ARCHITECTURE.md
-src/seflag/examples/seflag_results/
+**/seflag_results/

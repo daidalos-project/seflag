@@ -7,10 +7,11 @@ import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, ClassVar, Literal
+from typing import Any, ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from seflag.enums import LexicalFormat, PairField
 from seflag.config import EvaluationConfig
 from seflag.data.files import FileResolver, FileSource
 from seflag.errors import ConfigError, DataError
@@ -78,7 +79,7 @@ class WordPairsDataset(LexicalDataset):
     description = "Word pairs (with optional similarity scores) from JSON, TSV or CSV files."
 
     class Config(FileSource):
-        format: Literal["json", "tsv", "csv"] = Field(description="File format.")
+        format: LexicalFormat = Field(description="File format.")
         # JSON
         records_key: str | None = Field(None, description="json: key of the list of entries (null: top-level list).")
         pair_field: str | None = Field(None, description="json: field holding both words, e.g. 'κακός, ἀγαθός'.")
@@ -89,14 +90,14 @@ class WordPairsDataset(LexicalDataset):
                                       description="json: keep only entries whose fields have these values.")
         # TSV / CSV
         header: bool = Field(False, description="tsv/csv: the first row names the columns.")
-        columns: dict[Literal["word1", "word2", "score"], str | int] = Field(
-            default_factory=lambda: {"word1": 0, "word2": 1},
+        columns: dict[PairField, str | int] = Field(
+            default_factory=lambda: {PairField.WORD1: 0, PairField.WORD2: 1},
             description="tsv/csv: column (name or 0-based index) of word1, word2 and optionally score.")
         subset_by_file: bool = Field(False, description="Report results per file in addition to the total.")
 
         @model_validator(mode="after")
         def _json_fields(self):
-            if self.format == "json" and (self.pair_field is None) == (self.word_fields is None):
+            if self.format == LexicalFormat.JSON and (self.pair_field is None) == (self.word_fields is None):
                 raise ValueError("json needs exactly one of 'pair_field' and 'word_fields'")
             if self.word_fields is not None and len(self.word_fields) != 2:
                 raise ValueError("'word_fields' needs exactly two field names")
@@ -122,7 +123,7 @@ class WordPairsDataset(LexicalDataset):
         return pairs
 
     def _tabular_pairs(self, path: Path, subset: str | None) -> list[WordPair]:
-        rows = _tabular_rows(path, "\t" if self.config.format == "tsv" else ",")
+        rows = _tabular_rows(path, "\t" if self.config.format == LexicalFormat.TSV else ",")
         header: list[str] | None = rows.pop(0) if self.config.header and rows else None
         index: dict[str, int] = {}
         for field, column in self.config.columns.items():
@@ -141,7 +142,7 @@ class WordPairsDataset(LexicalDataset):
         pairs: list[WordPair] = []
         for path in self.resolver.files():
             subset: str | None = path.stem if self.config.subset_by_file else None
-            json: bool = self.config.format == "json"
+            json: bool = self.config.format == LexicalFormat.JSON
             pairs += self._json_pairs(path, subset) if json else self._tabular_pairs(path, subset)
         return pairs
 

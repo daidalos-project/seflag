@@ -46,11 +46,12 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 from seflag import __version__, registry
 from seflag.components import section_label
-from seflag.config import EvaluationConfig, OutputOptions, load_config
+from seflag.config import DatasetSpec, EvaluationConfig, ModelSpec, OutputOptions, TaskSpec, load_config
+from seflag.enums import ComponentKind, Language, TaskType
 from seflag.errors import ConfigError, SeflagError
 from seflag.runner import EvaluationResult, run
 
@@ -65,11 +66,22 @@ class AxisEntry(BaseModel):
 
     model_config = ConfigDict(extra="forbid", protected_namespaces=())
     label: str | None = Field(None, description="Name in the table; default: the model/dataset name.")
-    language: str | None = None
-    task: str | dict[str, Any] | None = None
+    language: Language | None = None
+    task: TaskType | str | dict[str, Any] | None = None
     dataset: dict[str, Any] | None = None
     model: dict[str, Any] | None = None
     options: dict[str, Any] | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _typed_sections(cls, data: Any) -> Any:
+        """Accepts typed component Configs (e.g. ``SpacyBackend.Config(...)``) as task, dataset and model sections."""
+        if isinstance(data, dict):
+            data = dict(data)
+            for key, spec in (("task", TaskSpec), ("dataset", DatasetSpec), ("model", ModelSpec)):
+                if isinstance(data.get(key), BaseModel):
+                    data[key] = spec.section(data[key])
+        return data
 
     def sections(self) -> dict[str, Any]:
         return {key: getattr(self, key) for key in ENTRY_SECTIONS if getattr(self, key) is not None}
@@ -115,6 +127,13 @@ class MatrixConfig:
     @property
     def model_labels(self) -> list[str]:
         return list(dict.fromkeys(c.model for c in self.cells))
+
+
+def _jsonable(value: Any) -> Any:
+    """JSON form of typed Config objects (and paths) in a configuration given as Python dictionary."""
+    if isinstance(value, BaseModel):
+        return value.model_dump(mode="json", exclude_unset=True)
+    return str(value)
 
 
 def is_matrix(source: str | Path | dict[str, Any]) -> bool:
@@ -171,7 +190,7 @@ def load_matrix(source: str | Path | dict[str, Any], **overrides: Any) -> Matrix
         if not isinstance(data, dict):
             raise ConfigError(f"{path}: expected a mapping at the top level")
         base_dir, name = path.resolve().parent, path.stem
-    given: dict[str, Any] = json.loads(json.dumps(data, default=str))
+    given: dict[str, Any] = json.loads(json.dumps(data, default=_jsonable))
     if "matrix" not in data:
         raise ConfigError("Not a matrix configuration: no 'matrix' section.")
     try:
@@ -179,6 +198,9 @@ def load_matrix(source: str | Path | dict[str, Any], **overrides: Any) -> Matrix
     except ValidationError as e:
         raise ConfigError(f"Invalid 'matrix' section:\n{e}") from e
     base: dict[str, Any] = _merge(data, overrides)
+    for key, section_spec in (("task", TaskSpec), ("dataset", DatasetSpec), ("model", ModelSpec)):
+        if isinstance(base.get(key), BaseModel):  # shared sections given as typed Configs
+            base[key] = section_spec.section(base[key])
     name = str(base.get("name") or name)
     if not spec.datasets and "dataset" not in base:
         raise ConfigError("The matrix needs 'matrix.datasets' or a shared 'dataset' section.")
@@ -232,7 +254,7 @@ def _lookup(values: dict[str, Any], metric: str) -> Any:
 
 
 def _headline(result: EvaluationResult) -> str | None:
-    metric: str | None = getattr(registry.get("tasks", result.task), "primary_metric", None)
+    metric: str | None = getattr(registry.get(ComponentKind.TASKS, result.task), "primary_metric", None)
     if metric is not None and _lookup(result.metrics, metric) is not None:
         return metric
     return next((k for k, v in result.metrics.items() if isinstance(v, float)), None)

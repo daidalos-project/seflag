@@ -8,6 +8,7 @@ from typing import Any, ClassVar
 from pydantic import BaseModel, ConfigDict
 from spacy.tokens import Doc, Token
 
+from seflag.enums import Layer
 from seflag.config import EvaluationOptions
 from seflag.metrics import accuracy, top_errors
 from seflag.normalization import get_pipeline
@@ -36,8 +37,8 @@ class Task(ABC):
 
     @property
     @abstractmethod
-    def required_layers(self) -> set[str]:
-        """Gold annotation layers (see seflag.data.records.LAYERS) needed by this task."""
+    def required_layers(self) -> set[Layer]:
+        """Gold annotation layers needed by this task."""
 
     def bind_backend(self, backend: Any) -> None:  # noqa: B027 - optional hook, deliberately empty
         """Called after prediction and before evaluation; lets a task query the backend (e.g. label inventories).
@@ -54,7 +55,7 @@ class LexicalTask(Task):
     """Base for type-level tasks that evaluate word embeddings on lexical datasets instead of sentences."""
 
     @property
-    def required_layers(self) -> set[str]:
+    def required_layers(self) -> set[Layer]:
         return set()
 
     def evaluate(self, gold: list[Doc], predicted: list[Doc]) -> TaskResult:

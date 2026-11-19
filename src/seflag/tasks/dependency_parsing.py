@@ -18,11 +18,12 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 from spacy.tokens import Doc, Token
 
+from seflag.enums import DeprelSubtypes, Layer, ParsingMetric
 from seflag.errors import DataError
 from seflag.normalization import get_pipeline
 from seflag.tasks.base import Task, TaskResult
@@ -34,7 +35,7 @@ CONTENT_DEPRELS: frozenset[str] = frozenset({
     "orphan", "goeswith", "reparandum", "root", "dep",
 })
 FUNCTIONAL_DEPRELS: frozenset[str] = frozenset({"aux", "cop", "mark", "det", "clf", "case", "cc"})
-ALL_METRICS: tuple[str, ...] = ("uas", "las", "clas", "mlas", "blex")
+ALL_METRICS: tuple[ParsingMetric, ...] = tuple(ParsingMetric)
 
 
 @dataclass(slots=True)
@@ -95,11 +96,12 @@ class DependencyParsingTask(Task):
 
     class Config(BaseModel):
         model_config = ConfigDict(extra="forbid")
-        metrics: list[Literal["uas", "las", "clas", "mlas", "blex"]] = Field(
+        metrics: list[ParsingMetric] = Field(
             default_factory=lambda: list(ALL_METRICS),
             description="Metrics to compute. MLAS needs gold UPOS and features, BLEX gold lemmas.")
-        deprel_subtypes: Literal["ignore", "keep"] = Field(
-            "ignore", description="'ignore' compares universal relations only (official), 'keep' full labels.")
+        deprel_subtypes: DeprelSubtypes = Field(
+            DeprelSubtypes.IGNORE,
+            description="'ignore' compares universal relations only (official), 'keep' full labels.")
         exclude_deprels: list[str] = Field(
             default_factory=list,
             description="Words whose gold relation is listed here are not scored, e.g. [punct]. Not official.")
@@ -115,12 +117,12 @@ class DependencyParsingTask(Task):
         return tuple(m for m in ALL_METRICS if m in self.config.metrics)
 
     @property
-    def required_layers(self) -> set[str]:
-        layers: set[str] = {"dependencies"}
-        if "mlas" in self.config.metrics:
-            layers |= {"upos", "morph"}
-        if "blex" in self.config.metrics:
-            layers.add("lemma")
+    def required_layers(self) -> set[Layer]:
+        layers: set[Layer] = {Layer.DEPENDENCIES}
+        if ParsingMetric.MLAS in self.config.metrics:
+            layers |= {Layer.UPOS, Layer.MORPH}
+        if ParsingMetric.BLEX in self.config.metrics:
+            layers.add(Layer.LEMMA)
         return layers
 
     # --- word extraction -----------------------------------------------------------------------------
@@ -139,7 +141,7 @@ class DependencyParsingTask(Task):
             if name in UNIVERSAL_FEATURES:
                 feats.append(f"{name}={value}")
         head: int = 0 if token.head.i == token.i else token.head.i - token.doc[0].i + 1
-        return Word(head=head, deprel=universal if self.config.deprel_subtypes == "ignore" else deprel,
+        return Word(head=head, deprel=universal if self.config.deprel_subtypes == DeprelSubtypes.IGNORE else deprel,
                     universal_deprel=universal, upos=token.pos_, feats="|".join(sorted(feats)),
                     lemma=normalize_lemma(token.lemma_))
 

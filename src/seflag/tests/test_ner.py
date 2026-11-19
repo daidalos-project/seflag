@@ -2,7 +2,8 @@ import pytest
 from spacy.tokens import Doc, Span
 from spacy.vocab import Vocab
 
-from seflag import load_config, registry, run
+from seflag import load_config, load_dataset, registry, run
+from seflag.enums import DatasetSource, Language, RepoType
 from seflag.backends.base import Backend
 from seflag.data.records import EntitySpan, SentenceRecord, TokenRecord, record_to_doc
 from seflag.data.tags import TagScheme, decode
@@ -40,12 +41,9 @@ HERODOTOS = "Label\tWord\nPRS-B\tC.\nPRS-I\tIulius\n0\tvenit\n0\t.\n\nGEO-B\tRom
 
 
 def columns_dataset(tmp_path, content, **params):
-    from seflag.data.columns import ColumnsDataset
-
     (tmp_path / "d.tsv").write_text(content, encoding="utf-8")
-    config = load_config({"language": "la", "task": "ner", "model": {"backend": "spacy", "name": "x"},
-                          "dataset": {"source": "columns", "path": str(tmp_path / "d.tsv")}})
-    return ColumnsDataset(ColumnsDataset.Config(path=str(tmp_path / "d.tsv"), **params), config)
+    return load_dataset({"source": DatasetSource.COLUMNS, "path": str(tmp_path / "d.tsv"), **params},
+                        language=Language.LATIN)
 
 
 def test_columns_reader(tmp_path):
@@ -157,11 +155,11 @@ def test_columns_from_hub_repository(tmp_path, monkeypatch):
         return str(snapshot)
 
     monkeypatch.setattr(huggingface_hub, "snapshot_download", fake_download)
-    config = load_config({"language": "grc", "task": "ner", "model": {"backend": "spacy", "name": "x"},
-                          "dataset": {"source": "columns", "repo": "someone/model"}})
-    ds = ColumnsDataset(ColumnsDataset.Config(repo="someone/model", repo_type="model", revision="abc123",
-                                              path="test.tsv", header=False, delimiter=" ",
-                                              columns={"form": 0, "ner": 2}), config)
+    # a typed dataset Config instead of a dictionary
+    ds = load_dataset(ColumnsDataset.Config(repo="someone/model", repo_type=RepoType.MODEL, revision="abc123",
+                                            path="test.tsv", header=False, delimiter=" ",
+                                            columns={"form": 0, "ner": 2}),
+                      language=Language.ANCIENT_GREEK)
     records = list(ds.records())
     assert [len(r.tokens) for r in records] == [2, 1] and records[0].entities == [E(1, 1, "LOC")]
     # only the requested files are downloaded, from the right repository type and revision

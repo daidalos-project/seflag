@@ -11,6 +11,7 @@ dataset:
 model:
   backend: spacy
   name: la_core_web_lg
-  exclude: [morphologizer, parser, tagger, ner]   # same components as excluded in the original lemma.py
+  # same components as excluded in the original lemma.py; LatinCy >= 3.9 splits enclitics (-que, -ne, ...) itself, which changes the gold tokens
+  exclude: [enclitic_splitter, morphologizer, parser, tagger, ner]
 options:
   label_normalization: []

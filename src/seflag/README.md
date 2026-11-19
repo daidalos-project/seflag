@@ -25,11 +25,16 @@ pip install "seflag[all]"          # everything below
 Extras: `hf` (Hub datasets), `transformers`, `flair`, `morpheus` (Ancient Greek beta code conversion),
 `embeddings` (gensim). Python 3.10–3.13.
 
-Models are installed separately. If a model is missing, `seflag run` prints the exact command, e.g. for LatinCy:
+Models are installed separately. If a model is missing, `seflag run` prints the exact command, e.g. for LatinCy
+and greCy:
 
 ```bash
-pip install https://huggingface.co/latincy/la_core_web_lg/resolve/main/la_core_web_lg-any-py3-none-any.whl
+pip install https://huggingface.co/latincy/la_core_web_lg/resolve/eef57207424f80d2e3806315bdc08554f432f740/la_core_web_lg-3.9.8-py3-none-any.whl
+pip install https://github.com/jmyerston/greCy/releases/download/v3.7.5/grc_proiel_lg-3.7.5-py3-none-any.whl
 ```
+
+The URLs are pinned to a specific model version, because pip only installs wheels with a version in their file
+name and the model authors replace or delete older wheels. Both models need spaCy 3.8.
 
 Morpheus is downloaded and compiled automatically on first use (Linux and macOS; needs a C compiler and `make`),
 unless `$MORPHEUS_PATH` points to an existing installation.
@@ -132,7 +137,9 @@ Choices that silently change results are named options and stored with every res
 * `task.exclude_upos`, `task.features`, `task.deprel_subtypes`, `task.gold_labels` / `task.predicted_labels` (label
   mappings for NER), and more.
 
-`seflag list -v` shows every task, data source, backend and normalizer with all its options.
+`seflag list -v` shows every task, data source, backend and normalizer with all its options and their allowed
+values. Configurations are validated completely when they are loaded, including each component's options, and
+misspelled names get a suggestion (`unknown task 'lemmatisation'; did you mean 'lemmatization'?`).
 
 Datasets and models differ in how they encode the same text in Unicode (elision marks, u/v, case, NFC vs NFD), which
 can change scores by several points. [ENCODING.md](https://github.com/daidalos-project/seflag/blob/main/src/seflag/ENCODING.md)
@@ -166,17 +173,47 @@ model:
 
 ## Python API
 
-Besides `load_config` and `run`, the package gives direct access to its data loading, models and results:
+In Python, configurations are best built from enums and the components' typed `Config` classes instead of strings
+and dictionaries: your editor completes the allowed values, and typos fail immediately. Both forms are validated
+the same way and produce identical result files.
+
+```python
+import seflag
+from seflag import Language, Normalizer, Upos
+from seflag.backends.spacy import SpacyBackend
+from seflag.config import EvaluationOptions
+from seflag.data.huggingface import HuggingFaceDataset
+from seflag.tasks.lemmatization import LemmatizationTask
+
+config = seflag.load_config({
+    "language": Language.LATIN,
+    "task": LemmatizationTask.Config(exclude_upos=[Upos.PUNCT]),
+    "dataset": HuggingFaceDataset.Config(repo="daidalos-project/latin_treebanks_ud_test",
+                                         revision="14ab3708f8f55eaa700ac5828cb3351fe5346474", split="test"),
+    "model": SpacyBackend.Config(name="la_core_web_lg"),
+    "options": EvaluationOptions(label_normalization=[Normalizer.V_TO_U, Normalizer.J_TO_I]),
+})
+result = seflag.run(config)
+```
+
+All fixed vocabularies (languages, tasks, normalizers, UPOS tags, component options) are enums in `seflag.enums`.
+Names of tasks, data sources and backends can be extended by plugins, so `TaskType`, `DatasetSource` and
+`BackendName` list the built-in ones; any other name must be registered. Vocabularies that come from the data
+(split names, dependency relations, feature names) remain strings.
+
+Beyond running evaluations, the package gives direct access to its data loading, models and results:
 
 ```python
 from pathlib import Path
 
 import seflag
+from seflag.data.huggingface import HuggingFaceDataset
 
 # SEFLAG's data access on its own: a configuration file, or just its dataset section
-dataset = seflag.load_dataset({"source": "huggingface", "repo": "daidalos-project/latin_treebanks_ud_test",
-                               "revision": "14ab3708f8f55eaa700ac5828cb3351fe5346474", "split": "test"},
-                              language="la")
+dataset = seflag.load_dataset(HuggingFaceDataset.Config(repo="daidalos-project/latin_treebanks_ud_test",
+                                                        revision="14ab3708f8f55eaa700ac5828cb3351fe5346474",
+                                                        split="test"),
+                              language=seflag.Language.LATIN)
 docs = dataset.docs()               # gold sentences as spaCy Docs, with every annotation layer of the data
 records = list(dataset.records())   # or as SentenceRecord objects (CoNLL-U semantics)
 
@@ -200,7 +237,10 @@ from spacy.tokens import Doc
 from spacy.vocab import Vocab
 
 import seflag
+from seflag import ComponentKind, Language
 from seflag.backends.base import Backend
+from seflag.data.conllu import ConlluDataset
+from seflag.tasks.lemmatization import LemmatizationTask
 
 
 class LowercaseLemmatizer(Backend):
@@ -222,11 +262,12 @@ class LowercaseLemmatizer(Backend):
         return {"name": "lowercase-baseline", "keep_proper_names": self.config.keep_proper_names}
 
 
-seflag.register("backends", "lowercase", LowercaseLemmatizer)
+seflag.register(ComponentKind.BACKENDS, "lowercase", LowercaseLemmatizer)
 result = seflag.run(seflag.load_config({
-    "language": "la", "task": "lemmatization",
-    "dataset": {"source": "conllu", "path": "my_treebank/"},
-    "model": {"backend": "lowercase", "keep_proper_names": True},
+    "language": Language.LATIN,
+    "task": LemmatizationTask.Config(),
+    "dataset": ConlluDataset.Config(path="my_treebank/"),
+    "model": LowercaseLemmatizer.Config(keep_proper_names=True),
 }))
 print(result.metrics["accuracy"])
 ```

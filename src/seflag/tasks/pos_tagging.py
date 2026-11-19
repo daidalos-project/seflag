@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 from spacy.tokens import Token
 
+from seflag.enums import Layer, Tagset
 from seflag.metrics import classification_report, confusion_matrix
 from seflag.tasks.base import TokenLabelTask
 
@@ -17,14 +18,14 @@ class PosTaggingTask(TokenLabelTask):
 
     class Config(BaseModel):
         model_config = ConfigDict(extra="forbid")
-        tagset: Literal["upos", "xpos"] = Field("upos", description="Which tag layer to compare.")
+        tagset: Tagset = Field(Tagset.UPOS, description="Which tag layer to compare.")
 
     @property
-    def required_layers(self) -> set[str]:
-        return {self.config.tagset}
+    def required_layers(self) -> set[Layer]:
+        return {Layer.UPOS if self.config.tagset == Tagset.UPOS else Layer.XPOS}
 
     def label(self, token: Token) -> str:
-        return token.pos_ if self.config.tagset == "upos" else token.tag_
+        return token.pos_ if self.config.tagset == Tagset.UPOS else token.tag_
 
     def extra_metrics(self, gold: list[str], pred: list[str]) -> dict[str, Any]:
         report: dict[str, Any] = classification_report(gold, pred)

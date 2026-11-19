@@ -11,6 +11,7 @@ from typing import Any
 from spacy.tokens import Doc, DocBin
 from spacy.vocab import Vocab
 
+from seflag.enums import Layer
 from seflag.backends.base import Backend
 from seflag.config import EvaluationConfig
 from seflag.errors import SeflagError
@@ -45,7 +46,7 @@ class LaunchedBackend(Backend):
             raise SeflagError(f"The backend returned {len(docs)} documents for {len(sentences)} sentences.")
         return docs
 
-    def label_inventory(self, layer: str) -> set[str] | None:
+    def label_inventory(self, layer: Layer) -> set[str] | None:
         labels = (self._info or {}).get("inventories", {}).get(layer)
         return None if labels is None else set(labels)
 

@@ -11,7 +11,9 @@ import re
 import unicodedata
 from collections.abc import Callable
 
-Normalizer = Callable[[str], str]
+from seflag.enums import Normalizer
+
+NormalizerFunction = Callable[[str], str]
 
 
 def _strip_diacritics(text: str) -> str:
@@ -48,7 +50,7 @@ def elision_position(text: str) -> int | None:
     return None
 
 
-def elision_to(mark: str) -> Normalizer:
+def elision_to(mark: str) -> NormalizerFunction:
     """Normalizer that writes the elision mark of every elided Greek word as ``mark``."""
     def normalize(text: str) -> str:
         position: int | None = elision_position(text)
@@ -79,36 +81,36 @@ def _lunate_sigma(text: str) -> str:
     return "".join(out)
 
 
-NORMALIZERS: dict[str, tuple[Normalizer, str]] = {
-    "nfc": (lambda s: unicodedata.normalize("NFC", s), "Unicode canonical composition (NFC)"),
-    "nfd": (lambda s: unicodedata.normalize("NFD", s), "Unicode canonical decomposition (NFD)"),
-    "nfkc": (lambda s: unicodedata.normalize("NFKC", s), "Unicode compatibility composition (NFKC)"),
-    "lowercase": (str.lower, "Lowercase all characters"),
-    "v_to_u": (lambda s: s.replace("v", "u").replace("V", "U"), "Latin: replace v/V with u/U"),
-    "j_to_i": (lambda s: s.replace("j", "i").replace("J", "I"), "Latin: replace j/J with i/I"),
-    "strip_diacritics": (_strip_diacritics, "Remove combining marks (accents, breathings, macrons)"),
-    "elision_to_u02bc": (elision_to("\u02bc"), "Greek: elision marks of elided words -> U+02BC MODIFIER LETTER "
-                                                "APOSTROPHE (what greCy expects)"),
-    "elision_to_u2019": (elision_to("\u2019"), "Greek: elision marks of elided words -> U+2019 RIGHT SINGLE "
+NORMALIZERS: dict[Normalizer, tuple[NormalizerFunction, str]] = {
+    Normalizer.NFC: (lambda s: unicodedata.normalize("NFC", s), "Unicode canonical composition (NFC)"),
+    Normalizer.NFD: (lambda s: unicodedata.normalize("NFD", s), "Unicode canonical decomposition (NFD)"),
+    Normalizer.NFKC: (lambda s: unicodedata.normalize("NFKC", s), "Unicode compatibility composition (NFKC)"),
+    Normalizer.LOWERCASE: (str.lower, "Lowercase all characters"),
+    Normalizer.V_TO_U: (lambda s: s.replace("v", "u").replace("V", "U"), "Latin: replace v/V with u/U"),
+    Normalizer.J_TO_I: (lambda s: s.replace("j", "i").replace("J", "I"), "Latin: replace j/J with i/I"),
+    Normalizer.STRIP_DIACRITICS: (_strip_diacritics, "Remove combining marks (accents, breathings, macrons)"),
+    Normalizer.ELISION_TO_U02BC: (elision_to("\u02bc"), "Greek: elision marks of elided words -> U+02BC MODIFIER "
+                                                           "LETTER APOSTROPHE (what greCy expects)"),
+    Normalizer.ELISION_TO_U2019: (elision_to("\u2019"), "Greek: elision marks of elided words -> U+2019 RIGHT SINGLE "
                                                 "QUOTATION MARK (Morpheus, Ancient-Greek-BERT)"),
-    "elision_to_apostrophe": (elision_to("'"), "Greek: elision marks of elided words -> U+0027 APOSTROPHE "
+    Normalizer.ELISION_TO_APOSTROPHE: (elision_to("'"), "Greek: elision marks of elided words -> U+0027 APOSTROPHE "
                                                "(Greek fastText vectors)"),
-    "final_sigma": (_final_sigma, "Greek: σ at the end of a word -> ς"),
-    "lunate_sigma": (_lunate_sigma,
+    Normalizer.FINAL_SIGMA: (_final_sigma, "Greek: σ at the end of a word -> ς"),
+    Normalizer.LUNATE_SIGMA: (_lunate_sigma,
                      "Greek: lunate sigma \u03f2/\u03f9 (and Latin C/c used as one in Greek words) -> σ/ς/Σ"),
-    "strip_homonym_digits": (
+    Normalizer.STRIP_HOMONYM_DIGITS: (
         lambda s: re.sub(r"(?<=\D)#?\d+$", "", s),
         "Remove trailing homonym numbers from lemmas, e.g. 'sum1' or 'sum#1' (Morpheus) -> 'sum'",
     ),
 }
 
 
-def get_pipeline(names: list[str]) -> Normalizer:
-    """Composes the named normalizers (applied in the given order) into a single function."""
-    unknown: list[str] = [n for n in names if n not in NORMALIZERS]
+def get_pipeline(names: list[Normalizer | str]) -> NormalizerFunction:
+    """Composes the given normalizers (applied in this order) into a single function."""
+    unknown: list[str] = [str(n) for n in names if n not in set(Normalizer)]
     if unknown:
         raise ValueError(f"Unknown normalizer(s) {unknown}. Available: {', '.join(NORMALIZERS)}")
-    functions: list[Normalizer] = [NORMALIZERS[n][0] for n in names]
+    functions: list[NormalizerFunction] = [NORMALIZERS[Normalizer(n)][0] for n in names]
 
     def pipeline(text: str) -> str:
         for fn in functions:

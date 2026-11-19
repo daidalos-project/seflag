@@ -6,9 +6,12 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
+import typing
+from enum import Enum
 from pathlib import Path
 
 from seflag import __version__, registry
+from seflag.enums import ComponentKind
 from seflag.errors import SeflagError
 
 
@@ -40,10 +43,36 @@ def _cmd_run(args: argparse.Namespace) -> int:
     return status
 
 
+def _plain(value: object) -> object:
+    """Enum members as their values, also inside lists and dictionaries (for readable defaults)."""
+    if isinstance(value, Enum):
+        return value.value
+    if isinstance(value, list):
+        return [_plain(v) for v in value]
+    if isinstance(value, dict):
+        return {_plain(k): _plain(v) for k, v in value.items()}
+    return value
+
+
+def _field_summary(finfo) -> str:
+    """'required' or the default, plus the allowed values of enum-typed fields."""
+    summary: str = "required" if finfo.is_required() else \
+        f"default: {_plain(finfo.get_default(call_default_factory=True))!r}"
+    pending: list = [finfo.annotation]
+    choices: list[str] = []
+    while pending:  # enums anywhere in the annotation, e.g. list[Upos] or FeatureSelection | list[str]
+        annotation = pending.pop()
+        if isinstance(annotation, type) and issubclass(annotation, Enum):
+            choices += [str(m.value) for m in annotation]
+        pending += list(typing.get_args(annotation))
+    return summary + (f"; one of: {', '.join(choices)}" if choices else "")
+
+
 def _cmd_list(args: argparse.Namespace) -> int:
     from seflag.normalization import NORMALIZERS
 
-    for kind, field in (("tasks", "task"), ("datasets", "dataset.source"), ("backends", "model.backend")):
+    for kind, field in ((ComponentKind.TASKS, "task"), (ComponentKind.DATASETS, "dataset.source"),
+                        (ComponentKind.BACKENDS, "model.backend")):
         print(f"{kind} ({field}):")
         for name in sorted(registry.available(kind)):
             try:
@@ -51,11 +80,7 @@ def _cmd_list(args: argparse.Namespace) -> int:
                 print(f"  {name:<16} {getattr(component, 'description', '')}")
                 if args.verbose:
                     for fname, finfo in component.Config.model_fields.items():
-                        if finfo.is_required():
-                            default = "required"
-                        else:
-                            default = f"default: {finfo.get_default(call_default_factory=True)!r}"
-                        print(f"      {fname} ({default}) {finfo.description or ''}")
+                        print(f"      {fname} ({_field_summary(finfo)}) {finfo.description or ''}")
             except ImportError as e:
                 print(f"  {name:<16} (unavailable: {e})")
     print("normalizers (options.input_normalization / options.label_normalization):")

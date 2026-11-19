@@ -7,16 +7,37 @@ from pydantic import BaseModel, ConfigDict, Field
 from spacy.language import Language
 from spacy.tokens import Doc
 
+from seflag.enums import Layer, SentenceSegmentation
 from seflag.backends.base import Backend
 from seflag.errors import MissingDependencyError, SeflagError
 
-# installation commands for spaCy pipelines that are not distributed via PyPI
+# Wheels of spaCy pipelines that are not distributed via PyPI. pip only accepts wheel file names with a concrete
+# version (PEP 427), so the URLs name one, and they are pinned to a repository revision or release, because the
+# maintainers delete old wheels from their main branches. tests/test_readme.py checks the file names (and, with
+# network access, that every URL exists).
+LATINCY_WHEELS: dict[str, tuple[str, str]] = {  # size: (version, revision of latincy/la_core_web_<size>)
+    "sm": ("3.9.8", "c433837a66f74643ba49bf853b87927954c7d701"),
+    "md": ("3.9.8", "45c9ac84afecfeb54bc0f6abacbc0aaf9ce1850e"),
+    "lg": ("3.9.8", "eef57207424f80d2e3806315bdc08554f432f740"),
+    "trf": ("3.9.9", "8e4accad1fd30bc962703d00ac3e7c0374125af0"),
+}
+# greCy's GitHub release with the model versions of SEFLAG's published results (the Hub repositories are gone)
+GRECY_RELEASE = "3.7.5"
+GRECY_MODELS = ("grc_proiel_sm", "grc_proiel_lg", "grc_proiel_trf", "grc_perseus_sm", "grc_perseus_lg",
+                "grc_perseus_trf", "grc_ner_trf")
+# odyCy; grc_odycy_joint_sm is only published under an invalid wheel name that pip rejects
+ODYCY_WHEELS: dict[str, tuple[str, str]] = {
+    "grc_odycy_joint_trf": ("0.7.0", "83046e93fa6b5dee122c3ca7cff1377512928143"),
+}
+
 KNOWN_MODELS: dict[str, str] = {
-    **{f"la_core_web_{size}": f"pip install https://huggingface.co/latincy/la_core_web_{size}/resolve/main/"
-                              f"la_core_web_{size}-any-py3-none-any.whl" for size in ("sm", "md", "lg", "trf")},
-    **{name: f"pip install grecy && python -m grecy install {name}"
-       for name in ("grc_proiel_sm", "grc_proiel_lg", "grc_proiel_trf", "grc_perseus_sm", "grc_perseus_lg",
-                    "grc_perseus_trf", "grc_odycy_joint_sm", "grc_odycy_joint_trf")},
+    **{f"la_core_web_{size}": f"pip install https://huggingface.co/latincy/la_core_web_{size}/resolve/{revision}/"
+                              f"la_core_web_{size}-{version}-py3-none-any.whl"
+       for size, (version, revision) in LATINCY_WHEELS.items()},
+    **{name: f"pip install https://github.com/jmyerston/greCy/releases/download/v{GRECY_RELEASE}/"
+             f"{name}-{GRECY_RELEASE}-py3-none-any.whl" for name in GRECY_MODELS},
+    **{name: f"pip install https://huggingface.co/chcaa/{name}/resolve/{revision}/{name}-{version}-py3-none-any.whl"
+       for name, (version, revision) in ODYCY_WHEELS.items()},
 }
 
 
@@ -62,7 +83,7 @@ class SpacyBackend(Backend):
     def predict(self, sentences: list[list[str]]) -> list[Doc]:
         nlp: Language = self.nlp
         inputs: list[Doc] = [Doc(nlp.vocab, words=words) for words in sentences]
-        if self.evaluation.options.sentence_segmentation == "gold":
+        if self.evaluation.options.sentence_segmentation == SentenceSegmentation.GOLD:
             # spaCy parsers respect preset sentence boundaries: one input = one sentence
             for doc in inputs:
                 for token in doc:
@@ -70,23 +91,35 @@ class SpacyBackend(Backend):
         outputs: list[Doc] = list(nlp.pipe(inputs, batch_size=self.config.batch_size))
         for words, doc in zip(sentences, outputs, strict=True):
             if len(doc) != len(words):
+                culprit = self._retokenizing_component(words)
                 raise SeflagError(
-                    f"Pipeline '{self.config.name}' changed the tokenization ({len(words)} -> {len(doc)} tokens). "
-                    "Exclude retokenizing components (e.g. merge_entities) via 'exclude'.")
+                    f"Pipeline '{self.config.name}' changed the tokenization ({len(words)} -> {len(doc)} tokens)"
+                    + (f" in its component '{culprit}'. Add it to 'exclude' in the model section."
+                       if culprit else ". Exclude retokenizing components (e.g. merge_entities) via 'exclude'.")
+                    + f" Sentence: {' '.join(words)}")
             for token in doc:
                 # spaCy labels roots 'ROOT'; UD uses 'root'
                 if token.dep_ == "ROOT":
                     token.dep_ = "root"
         return outputs
 
-    def label_inventory(self, layer: str) -> set[str] | None:
-        if layer == "entities":
+    def _retokenizing_component(self, words: list[str]) -> str | None:
+        """The first pipeline component that changes the number of tokens of a sentence (for error messages)."""
+        doc: Doc = Doc(self.nlp.vocab, words=words)
+        for name, component in self.nlp.pipeline:
+            doc = component(doc)
+            if len(doc) != len(words):
+                return name
+        return None
+
+    def label_inventory(self, layer: Layer) -> set[str] | None:
+        if layer == Layer.ENTITIES:
             labels: set[str] = set()
             for _, pipe in self.nlp.pipeline:
                 if pipe.__class__.__name__ in ("EntityRecognizer", "EntityRuler", "SpanRuler"):
                     labels |= set(pipe.labels)
             return labels or None
-        if layer != "morph":
+        if layer != Layer.MORPH:
             return None
         names: set[str] = set()
         found: bool = False

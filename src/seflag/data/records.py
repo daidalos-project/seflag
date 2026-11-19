@@ -18,6 +18,7 @@ from spacy.parts_of_speech import IDS as SPACY_POS_IDS
 from spacy.tokens import Doc, Span
 from spacy.vocab import Vocab
 
+from seflag.enums import Layer
 from seflag.errors import DataError
 
 
@@ -114,17 +115,17 @@ class SentenceRecord:
 
 
 # annotation layers a task may require, mapped to the TokenRecord fields they are read from
-LAYERS: dict[str, tuple[str, ...]] = {
-    "lemma": ("lemma",),
-    "upos": ("upos",),
-    "xpos": ("xpos",),
-    "morph": ("feats",),
-    "dependencies": ("head", "deprel"),
-    "entities": (),  # sentence-level: SentenceRecord.entities
+LAYERS: dict[Layer, tuple[str, ...]] = {
+    Layer.LEMMA: ("lemma",),
+    Layer.UPOS: ("upos",),
+    Layer.XPOS: ("xpos",),
+    Layer.MORPH: ("feats",),
+    Layer.DEPENDENCIES: ("head", "deprel"),
+    Layer.ENTITIES: (),  # sentence-level: SentenceRecord.entities
 }
 
 
-def record_to_doc(vocab: Vocab, record: SentenceRecord, layers: set[str]) -> Doc:
+def record_to_doc(vocab: Vocab, record: SentenceRecord, layers: set[Layer]) -> Doc:
     """Builds a gold-standard ``Doc`` holding the requested annotation layers.
 
     Missing annotations (``None``) are stored as empty strings; tasks exclude such tokens from scoring.
@@ -136,19 +137,19 @@ def record_to_doc(vocab: Vocab, record: SentenceRecord, layers: set[str]) -> Doc
         raise DataError(f"Sentence {record.sent_id!r} has no tokens.")
     tokens: list[TokenRecord] = record.tokens
     kwargs: dict[str, Any] = {}
-    if "lemma" in layers:
+    if Layer.LEMMA in layers:
         kwargs["lemmas"] = [t.lemma or "" for t in tokens]
-    if "upos" in layers:
+    if Layer.UPOS in layers:
         upos: list[str] = [t.upos or "" for t in tokens]
         invalid: set[str] = {v for v in upos if v not in SPACY_POS_IDS}
         if invalid:
             raise DataError(f"Sentence {record.sent_id!r}: invalid UPOS tag(s) {sorted(invalid)}.")
         kwargs["pos"] = upos
-    if "xpos" in layers:
+    if Layer.XPOS in layers:
         kwargs["tags"] = [t.xpos or "" for t in tokens]
-    if "morph" in layers:
+    if Layer.MORPH in layers:
         kwargs["morphs"] = [t.feats or "" for t in tokens]
-    if "dependencies" in layers:
+    if Layer.DEPENDENCIES in layers:
         # spaCy convention: absolute token indices, the root points to itself. Words without a gold head
         # also point to themselves and get an empty label, so tasks can tell them apart and skip them.
         heads: list[int] = []
@@ -165,7 +166,7 @@ def record_to_doc(vocab: Vocab, record: SentenceRecord, layers: set[str]) -> Doc
         kwargs["heads"] = heads
         kwargs["deps"] = deps
     doc = Doc(vocab, words=[t.form for t in tokens], **kwargs)
-    if "entities" in layers:
+    if Layer.ENTITIES in layers:
         spans = []
         for e in sorted(record.entities or [], key=lambda e: e.first):
             if not 1 <= e.first <= e.last <= len(tokens):
@@ -181,19 +182,19 @@ def record_to_doc(vocab: Vocab, record: SentenceRecord, layers: set[str]) -> Doc
     return doc
 
 
-def present_layers(records: list[SentenceRecord]) -> set[str]:
+def present_layers(records: list[SentenceRecord]) -> set[Layer]:
     """The annotation layers (keys of :data:`LAYERS`) that are annotated for at least one token or sentence."""
-    found: set[str] = {"entities"} if any(r.entities is not None for r in records) else set()
+    found: set[Layer] = {Layer.ENTITIES} if any(r.entities is not None for r in records) else set()
     for layer, names in LAYERS.items():
         if names and any(getattr(t, n) is not None for r in records for t in r.tokens for n in names):
             found.add(layer)
     return found
 
 
-def check_layers_present(records: list[SentenceRecord], layers: set[str]) -> None:
+def check_layers_present(records: list[SentenceRecord], layers: set[Layer]) -> None:
     """Raises if a required layer is not annotated for any token (e.g. a dataset without lemmas)."""
     for layer in sorted(layers):
-        if layer == "entities":
+        if layer == Layer.ENTITIES:
             if not any(r.entities is not None for r in records):
                 raise DataError("The dataset has no 'entities' annotations, which this task requires.")
             continue

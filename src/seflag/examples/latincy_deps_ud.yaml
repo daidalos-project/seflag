@@ -14,3 +14,4 @@ dataset:
 model:
   backend: spacy
   name: la_core_web_lg
+  exclude: [enclitic_splitter]   # LatinCy >= 3.9 splits enclitics (-que, -ne, ...) itself, which changes the gold tokens

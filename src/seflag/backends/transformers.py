@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 from spacy.parts_of_speech import IDS as SPACY_POS_IDS
 from spacy.tokens import Doc, Span
 from spacy.vocab import Vocab
 
+from seflag.enums import Layer, PredictionLayer
 from seflag.backends.base import Backend
 from seflag.data.tags import TagScheme, decode
 from seflag.errors import MissingDependencyError, SeflagError
@@ -36,8 +37,8 @@ class TransformersBackend(Backend):
         model_config = ConfigDict(extra="forbid")
         name: str = Field(description="Hub model id or local directory.")
         revision: str | None = Field(None, description="Hub revision; pin a commit hash for reproducible results.")
-        layer: Literal["entities", "upos", "xpos"] = Field(
-            "entities", description="What the labels are: BIO entity tags, UPOS tags or XPOS tags.")
+        layer: PredictionLayer = Field(
+            PredictionLayer.ENTITIES, description="What the labels are: BIO entity tags, UPOS tags or XPOS tags.")
         tag_scheme: TagScheme = Field(default_factory=TagScheme, description="Encoding of entity labels.")
         batch_size: int = Field(16, ge=1)
         max_length: int | None = Field(None, ge=8, description="Maximum subwords per window (default: model limit).")
@@ -124,9 +125,9 @@ class TransformersBackend(Backend):
         vocab = Vocab()
         docs: list[Doc] = []
         for words, tags in zip(sentences, labels, strict=True):
-            if self.config.layer == "upos":
+            if self.config.layer == PredictionLayer.UPOS:
                 doc = Doc(vocab, words=words, pos=[t if t in SPACY_POS_IDS else "" for t in tags])
-            elif self.config.layer == "xpos":
+            elif self.config.layer == PredictionLayer.XPOS:
                 doc = Doc(vocab, words=words, tags=tags)
             else:
                 doc = Doc(vocab, words=words)
@@ -134,10 +135,10 @@ class TransformersBackend(Backend):
             docs.append(doc)
         return docs
 
-    def label_inventory(self, layer: str) -> set[str] | None:
+    def label_inventory(self, layer: Layer) -> set[str] | None:
         if layer != self.config.layer:
             return None
-        if layer == "entities":
+        if layer == PredictionLayer.ENTITIES:
             parsed = (self.config.tag_scheme.parse(t) for t in self.labels.values())
             return {p[1] for p in parsed if p is not None}
         return set(self.labels.values())

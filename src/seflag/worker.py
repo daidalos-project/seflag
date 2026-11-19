@@ -13,7 +13,9 @@ from pathlib import Path
 
 from spacy.tokens import DocBin
 
-LAYERS: tuple[str, ...] = ("entities", "morph", "upos", "xpos")
+from seflag.enums import ComponentKind, Layer
+
+LAYERS: tuple[Layer, ...] = (Layer.ENTITIES, Layer.MORPH, Layer.UPOS, Layer.XPOS)
 
 
 def main(argv: list[str]) -> int:
@@ -24,7 +26,7 @@ def main(argv: list[str]) -> int:
     request: dict = json.loads(request_path.read_text(encoding="utf-8"))
     evaluation = load_config({**request["config"], "base_dir": request["base_dir"]})
     evaluation.model.launcher = None  # we are the launched process already
-    component = registry.get("backends", evaluation.model.backend)
+    component = registry.get(ComponentKind.BACKENDS, evaluation.model.backend)
     backend = component(validate_component_params(component, evaluation.model.params, "model"), evaluation)
     docs = backend.predict(request["sentences"])
     output_dir.mkdir(parents=True, exist_ok=True)

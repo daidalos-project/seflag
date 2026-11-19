@@ -3,9 +3,22 @@ import json
 import pytest
 import yaml
 
-from seflag import load_matrix, run_matrix
-from seflag.errors import ConfigError
+from seflag import load_matrix, registry, run_matrix
+from seflag.errors import ConfigError, MissingDependencyError
 from seflag.matrix import is_matrix
+from seflag.tests.conftest import LowercaseBackend
+
+
+class UninstalledBackend(LowercaseBackend):
+    """A model that is configured correctly but cannot run (as if its package were missing)."""
+
+    def predict(self, sentences):
+        raise MissingDependencyError("model not installed")
+
+
+@pytest.fixture(autouse=True)
+def uninstalled_backend(monkeypatch):
+    monkeypatch.setitem(registry.BUILTINS["backends"], "uninstalled", "seflag.tests.test_matrix:UninstalledBackend")
 
 
 def matrix_config(conllu_dir, backend, **table):
@@ -23,7 +36,7 @@ def matrix_config(conllu_dir, backend, **table):
                 {"model": {"backend": backend}},  # label defaults to the backend name
                 {"label": "first only", "language": "la", "model": {"backend": backend},
                  "options": {"max_sentences": 1}},
-                {"label": "broken", "model": {"backend": "nope"}},
+                {"label": "broken", "model": {"backend": "uninstalled"}},
             ],
             "table": table,
         },
@@ -68,7 +81,7 @@ def test_run_matrix_table_and_files(conllu_dir, fake_backend):
     assert table[2] == "| lowercase | 0.6667 | 0.6667 |"
     assert table[3] == "| first only | 0.7500 | – |"
     assert table[4] == "| broken | failed | failed |"
-    assert "Metric: accuracy" in result.table() and "Failed: UD Latin × broken: Unknown backend" in result.table()
+    assert "Metric: accuracy" in result.table() and "Failed: UD Latin × broken: model not installed" in result.table()
     assert len(result.failed) == 2
 
     saved = json.loads((result.path / "matrix.json").read_text(encoding="utf-8"))
@@ -115,5 +128,5 @@ def test_cli_runs_matrix_files(conllu_dir, fake_backend, capsys):
     out = capsys.readouterr().out
     assert "| first only | 0.7500 | – |" in out and "->" not in out
     assert not (conllu_dir.parent / "out").exists()
-    with pytest.raises(ConfigError, match="Unknown backend"):
+    with pytest.raises(MissingDependencyError, match="model not installed"):
         run_matrix(load_matrix(path, output={"dir": None}), fail_fast=True)

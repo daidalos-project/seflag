@@ -43,10 +43,13 @@ def test_pos_tagging(conllu_dir, fake_backend):
 
 
 def test_unknown_components(conllu_dir, fake_backend):
-    with pytest.raises(ConfigError, match="Unknown backend"):
-        run(config(conllu_dir, "nope"))
-    with pytest.raises(ConfigError, match="section 'task'"):
-        run(config(conllu_dir, fake_backend, task={"type": "pos_tagging", "tagset": "bad"}))
+    # rejected when loading, before anything runs; typos get a suggestion
+    with pytest.raises(ConfigError, match="unknown backend 'nope'"):
+        config(conllu_dir, "nope")
+    with pytest.raises(ConfigError, match="did you mean 'pos_tagging'"):
+        config(conllu_dir, fake_backend, task="pos_taging")
+    with pytest.raises(ConfigError, match=r"section 'task' \(PosTaggingTask\)"):
+        config(conllu_dir, fake_backend, task={"type": "pos_tagging", "tagset": "bad"})
 
 
 def test_cache_info_and_purge(tmp_path, monkeypatch, capsys):

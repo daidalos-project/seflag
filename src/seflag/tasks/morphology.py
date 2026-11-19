@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 from spacy.tokens import Doc, Token
 
+from seflag.enums import FeatureSelection, Layer
 from seflag.errors import ConfigError
 from seflag.metrics import top_errors
 from seflag.tasks.base import Task, TaskResult
@@ -77,8 +78,8 @@ class MorphologyTask(Task):
 
     class Config(BaseModel):
         model_config = ConfigDict(extra="forbid")
-        features: Literal["universal", "all", "model"] | list[str] = Field(
-            "universal",
+        features: FeatureSelection | list[str] = Field(
+            FeatureSelection.UNIVERSAL,
             description="Features to evaluate: 'universal' (CoNLL 2018 UFeats set), 'all', 'model' (universal "
                         "features the model can predict, from its label inventory), or an explicit list.")
         exclude_features: list[str] = Field(default_factory=list, description="Features never evaluated.")
@@ -91,17 +92,17 @@ class MorphologyTask(Task):
         with_upos: bool = Field(False, description="Also report accuracy of UPOS + features jointly.")
 
     @property
-    def required_layers(self) -> set[str]:
-        return {"morph", "upos"} if self.config.with_upos else {"morph"}
+    def required_layers(self) -> set[Layer]:
+        return {Layer.MORPH, Layer.UPOS} if self.config.with_upos else {Layer.MORPH}
 
     def __init__(self, config: Any, options):
         super().__init__(config, options)
         self.model_features: set[str] | None = None
 
     def bind_backend(self, backend: Any) -> None:
-        if self.config.features != "model":
+        if self.config.features != FeatureSelection.MODEL:
             return
-        inventory: set[str] | None = backend.label_inventory("morph")
+        inventory: set[str] | None = backend.label_inventory(Layer.MORPH)
         if inventory is None:
             raise ConfigError("'features: model' needs a backend that reports its feature inventory; "
                               "list the features explicitly instead.")
@@ -111,11 +112,11 @@ class MorphologyTask(Task):
     def _selected(self, name: str) -> bool:
         if name in self.config.exclude_features:
             return False
-        if self.config.features == "universal":
+        if self.config.features == FeatureSelection.UNIVERSAL:
             return name in UNIVERSAL_FEATURES
-        if self.config.features == "all":
+        if self.config.features == FeatureSelection.ALL:
             return True
-        if self.config.features == "model":
+        if self.config.features == FeatureSelection.MODEL:
             return name in (self.model_features or set())
         return name in self.config.features
 

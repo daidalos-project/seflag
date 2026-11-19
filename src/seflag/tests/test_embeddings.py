@@ -74,8 +74,9 @@ def test_word_retrieval_and_vocabulary_options(files):
 def test_case_insensitive_lookup(files):
     from seflag.backends.embeddings import GensimBackend
 
-    config = load_config({"language": "la", "task": "word_similarity", "dataset": {"source": "word_pairs"},
-                          "model": {"backend": "gensim"}})
+    config = load_config({"language": "la", "task": "word_similarity",
+                          "dataset": {"source": "word_pairs", "path": "pairs.tsv", "format": "tsv"},
+                          "model": {"backend": "gensim", "path": "model.vec", "format": "word2vec_text"}})
     backend = GensimBackend(GensimBackend.Config(path=str(files / "model.vec"), format="word2vec_text",
                                                  case_insensitive=True), config)
     assert backend.key("ROMA") == "Roma"  # the more frequent of 'Roma' and 'roma'

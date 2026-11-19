@@ -6,6 +6,7 @@ from typing import Any, ClassVar
 from pydantic import BaseModel, ConfigDict
 from spacy.tokens import Doc
 
+from seflag.enums import Layer
 from seflag.config import EvaluationConfig
 from seflag.errors import PredictionError
 
@@ -30,7 +31,7 @@ class Backend(ABC):
     def predict(self, sentences: list[list[str]]) -> list[Doc]:
         """Annotates pre-tokenized sentences."""
 
-    def label_inventory(self, layer: str) -> set[str] | None:
+    def label_inventory(self, layer: Layer) -> set[str] | None:
         """Labels the model can predict for an annotation layer (for 'morph': feature names), if known."""
         return None
 

@@ -5,10 +5,11 @@ from __future__ import annotations
 import hashlib
 import os
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from seflag.enums import RepoType
 from seflag.config import EvaluationConfig
 from seflag.errors import DataError, MissingDependencyError
 
@@ -46,7 +47,7 @@ class FileSource(BaseModel):
     path: str | list[str] = Field(".", description="A file, a directory, or a list of these.")
     pattern: str = Field("*", description="Glob pattern for files inside directories.")
     repo: str | None = Field(None, description="Hugging Face Hub repository to read the files from.")
-    repo_type: Literal["dataset", "model"] = Field("dataset", description="Type of the Hub repository.")
+    repo_type: RepoType = Field(RepoType.DATASET, description="Type of the Hub repository.")
     revision: str | None = Field(None, description="Hub revision; pin a commit hash for reproducible results.")
     url: str | None = Field(None, description="Download a single file from this URL instead (e.g. Zenodo).")
     checksum: str | None = Field(

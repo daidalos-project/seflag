@@ -17,6 +17,7 @@ import importlib
 from importlib.metadata import entry_points
 from typing import Any
 
+from seflag.enums import ComponentKind
 from seflag.errors import ConfigError
 
 BUILTINS: dict[str, dict[str, str]] = {
@@ -51,14 +52,17 @@ BUILTINS: dict[str, dict[str, str]] = {
 _REGISTERED: dict[str, dict[str, type]] = {kind: {} for kind in BUILTINS}
 
 
-def register(kind: str, name: str, component: type) -> None:
+def register(kind: ComponentKind | str, name: str, component: type) -> None:
     """Makes a component class available under ``name`` for the rest of the session.
 
-    ``kind`` is ``datasets``, ``backends`` or ``tasks``; afterwards configurations can use it, e.g.
-    ``model: {backend: <name>}``. Registered components take precedence over built-ins and entry points.
+    ``kind`` is a :class:`~seflag.enums.ComponentKind`, e.g. ``ComponentKind.BACKENDS``; afterwards configurations
+    can use the component, e.g. ``model: {backend: <name>}``. Registered components take precedence over built-ins
+    and entry points.
     """
-    if kind not in _REGISTERED:
-        raise ValueError(f"Unknown component kind '{kind}'; expected one of {', '.join(_REGISTERED)}")
+    try:
+        kind = ComponentKind(kind)
+    except ValueError:
+        raise ValueError(f"Unknown component kind '{kind}'; expected one of {', '.join(ComponentKind)}") from None
     _REGISTERED[kind][name] = component
 
 
@@ -74,6 +78,16 @@ def available(kind: str) -> dict[str, str]:
         found.setdefault(ep.name, ep.value)
     found.update({name: f"{c.__module__}:{c.__qualname__}" for name, c in _REGISTERED[kind].items()})
     return found
+
+
+def name_of(kind: str, cls: type) -> str | None:
+    """The registered name of a component class, or of the component a nested ``Config`` class belongs to."""
+    for name, registered in _REGISTERED[kind].items():
+        if cls is registered or cls is getattr(registered, "Config", None):
+            return name
+    qualname: str = cls.__qualname__.removesuffix(".Config")
+    target: str = f"{cls.__module__}:{qualname}"
+    return next((name for name, t in available(kind).items() if t == target), None)
 
 
 def get(kind: str, name: str) -> Any:

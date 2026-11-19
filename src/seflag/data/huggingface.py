@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import contextlib
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 from collections.abc import Iterator
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from seflag.enums import HubFormat, auto_to_none
 from seflag.data.base import DatasetAdapter
 from seflag.data.conllu import read_conllu_files, split_from_filename
 from seflag.data.files import collect_files, file_hashes
@@ -66,10 +67,12 @@ class HuggingFaceDataset(DatasetAdapter):
         repo: str = Field(description="Hub repository id (e.g. 'daidalos-project/...') or a builder like 'parquet'.")
         revision: str | None = Field(None, description="Git revision; pin a commit hash for reproducible results.")
         split: str = Field("test", description="Split to evaluate on (for CoNLL-U: inferred from UD file names).")
-        format: Literal["auto", "conllu", "table"] = Field("auto", description="See class documentation.")
+        format: HubFormat | None = Field(None, description="CoNLL-U files or a table (default: detected).")
         files: list[str] | None = Field(
             None, description="conllu: files in the repository to use (default: all .conllu files of the split).")
         subset_by_file: bool = Field(True, description="conllu: report results per file in addition to the total.")
+
+        _auto = field_validator("format", mode="before")(auto_to_none)
         name: str | None = Field(None, description="table: dataset configuration (subset) name.")
         data_files: str | list[str] | dict[str, Any] | None = Field(None, description="table: for load_dataset().")
         columns: dict[str, str] = Field(
@@ -94,7 +97,7 @@ class HuggingFaceDataset(DatasetAdapter):
     @property
     def format(self) -> str:
         if self._format is None:
-            if self.config.format != "auto":
+            if self.config.format is not None:
                 self._format = self.config.format
             elif self.config.repo in LOCAL_BUILDERS:
                 self._format = "table"
@@ -105,7 +108,7 @@ class HuggingFaceDataset(DatasetAdapter):
         return self._format
 
     def records(self) -> Iterator[SentenceRecord]:
-        return self._conllu_records() if self.format == "conllu" else self._table_records()
+        return self._conllu_records() if self.format == HubFormat.CONLLU else self._table_records()
 
     # --- CoNLL-U files in a Hub repository --------------------------------------------------------------
 
@@ -196,7 +199,7 @@ class HuggingFaceDataset(DatasetAdapter):
     def fingerprint(self) -> dict[str, Any]:
         info: dict[str, Any] = {"repo": self.config.repo, "revision": self.config.revision,
                                 "split": self.config.split, "format": self.format}
-        if self.format == "conllu":
+        if self.format == HubFormat.CONLLU:
             # snapshot directories are named after the commit hash
             info["resolved_revision"] = self.snapshot().name
             info["files"] = file_hashes(self.conllu_files(), self.snapshot())

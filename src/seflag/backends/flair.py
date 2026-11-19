@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from spacy.parts_of_speech import IDS as SPACY_POS_IDS
 from spacy.tokens import Doc, Span
 from spacy.vocab import Vocab
 
+from seflag.enums import Layer, PredictionLayer, auto_to_none
 from seflag.backends.base import Backend
 from seflag.data.tags import TagScheme
 from seflag.errors import MissingDependencyError, SeflagError
@@ -40,10 +41,12 @@ class FlairBackend(Backend):
         revision: str | None = Field(None, description="Hub revision; pin a commit hash for reproducible results.")
         filename: str | None = Field(
             None, description=f"Model file in the repository (default: first of {MODEL_FILES}).")
-        layer: Literal["auto", "entities", "upos", "xpos"] = Field(
-            "auto", description="What the tagger predicts; 'auto': entities for span taggers, else from tag type.")
+        layer: PredictionLayer | None = Field(
+            None, description="What the tagger predicts (default: entities for span taggers, else from the tag type).")
         tag_type: str | None = Field(None, description="flair label type (default: the tagger's own tag type).")
         batch_size: int = Field(32, ge=1)
+
+        _auto = field_validator("layer", mode="before")(auto_to_none)
 
     def __init__(self, config: Any, evaluation):
         super().__init__(config, evaluation)
@@ -82,12 +85,12 @@ class FlairBackend(Backend):
         return self.config.tag_type or self.tagger.tag_type
 
     @property
-    def layer(self) -> str:
-        if self.config.layer != "auto":
+    def layer(self) -> PredictionLayer:
+        if self.config.layer is not None:
             return self.config.layer
         if getattr(self.tagger, "predict_spans", False) or "ner" in self.tag_type.lower():
-            return "entities"
-        return "upos" if self.tag_type.lower() in ("upos", "pos") else "xpos"
+            return PredictionLayer.ENTITIES
+        return PredictionLayer.UPOS if self.tag_type.lower() in ("upos", "pos") else PredictionLayer.XPOS
 
     def predict(self, sentences: list[list[str]]) -> list[Doc]:
         _require_flair()
@@ -102,24 +105,24 @@ class FlairBackend(Backend):
         docs: list[Doc] = []
         layer, tag_type = self.layer, self.tag_type
         for words, sentence in zip(sentences, flair_sentences, strict=True):
-            if layer == "entities":
+            if layer == PredictionLayer.ENTITIES:
                 doc = Doc(vocab, words=words)
                 doc.ents = [Span(doc, span.tokens[0].idx - 1, span.tokens[-1].idx, label=span.get_label(tag_type).value)
                             for span in sentence.get_spans(tag_type)]
             else:
                 labels: list[str] = [t.get_label(tag_type).value if t.get_labels(tag_type) else "" for t in sentence]
-                if layer == "upos":
+                if layer == PredictionLayer.UPOS:
                     doc = Doc(vocab, words=words, pos=[t if t in SPACY_POS_IDS else "" for t in labels])
                 else:
                     doc = Doc(vocab, words=words, tags=labels)
             docs.append(doc)
         return docs
 
-    def label_inventory(self, layer: str) -> set[str] | None:
+    def label_inventory(self, layer: Layer) -> set[str] | None:
         if layer != self.layer:
             return None
         labels: list[str] = [lab for lab in self.tagger.label_dictionary.get_items() if lab not in ("<unk>", "O")]
-        if layer == "entities":
+        if layer == PredictionLayer.ENTITIES:
             scheme = TagScheme()
             return {p[1] for p in map(scheme.parse, labels) if p is not None and p[1] not in ("<START>", "<STOP>")}
         return set(labels) - {"<START>", "<STOP>"}

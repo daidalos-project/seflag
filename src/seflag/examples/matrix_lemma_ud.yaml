@@ -26,7 +26,7 @@ matrix:
       model:
         backend: spacy
         name: la_core_web_lg
-        exclude: [morphologizer, parser, tagger, ner]
+        exclude: [enclitic_splitter, morphologizer, parser, tagger, ner]   # LatinCy >= 3.9: keep the gold tokens
     - label: greCy (grc_proiel_lg)
       language: grc
       model:

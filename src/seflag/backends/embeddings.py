@@ -5,11 +5,12 @@ from __future__ import annotations
 import zipfile
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, ClassVar, Literal
+from typing import Any, ClassVar
 
 import numpy as np
 from pydantic import BaseModel, ConfigDict, Field
 
+from seflag.enums import EmbeddingFormat
 from seflag.config import EvaluationConfig
 from seflag.data.files import FileResolver, FileSource
 from seflag.errors import ConfigError, MissingDependencyError
@@ -71,7 +72,7 @@ class GensimBackend(EmbeddingBackend):
     description = "Static word embeddings via gensim: fastText .bin, word2vec .bin/.vec, gensim KeyedVectors."
 
     class Config(FileSource):
-        format: Literal["fasttext", "word2vec", "word2vec_text", "gensim"] = Field(
+        format: EmbeddingFormat = Field(
             description="fasttext (.bin with subwords), word2vec (binary), word2vec_text (.vec/.txt), gensim (.kv).")
         archive_member: str | None = Field(None, description="File inside a .zip archive to load.")
         max_vocabulary: int | None = Field(
@@ -111,18 +112,18 @@ class GensimBackend(EmbeddingBackend):
             except ImportError as e:
                 raise MissingDependencyError("Word embeddings need gensim: pip install 'seflag[embeddings]'") from e
             self._path = self._model_file()
-            fmt: str = self.config.format
-            if fmt == "fasttext":
+            fmt: EmbeddingFormat = self.config.format
+            if fmt == EmbeddingFormat.FASTTEXT:
                 self._kv = load_facebook_vectors(str(self._path))
-            elif fmt == "gensim":
+            elif fmt == EmbeddingFormat.GENSIM:
                 self._kv = KeyedVectors.load(str(self._path))
             else:
-                self._kv = KeyedVectors.load_word2vec_format(str(self._path), binary=fmt == "word2vec")
+                self._kv = KeyedVectors.load_word2vec_format(str(self._path), binary=fmt == EmbeddingFormat.WORD2VEC)
         return self._kv
 
     @property
     def supports_subwords(self) -> bool:
-        return self.config.format == "fasttext"
+        return self.config.format == EmbeddingFormat.FASTTEXT
 
     @property
     def keys(self) -> dict[str, str]:

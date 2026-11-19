@@ -15,15 +15,16 @@ import subprocess
 import unicodedata
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from spacy.tokens import Doc
 from spacy.vocab import Vocab
 
 from seflag.backends import morpheus_install
 from seflag.backends.base import Backend
-from seflag.errors import ConfigError, MissingDependencyError, SeflagError
+from seflag.enums import FallbackLemma, Language, LemmaChoice, MorpheusInstall, auto_to_none
+from seflag.errors import MissingDependencyError, SeflagError
 from seflag.normalization import elision_to
 
 _ELISION_TO_APOSTROPHE = elision_to("'")
@@ -46,26 +47,27 @@ class MorpheusBackend(Backend):
         model_config = ConfigDict(extra="forbid")
         path: str | None = Field(
             None, description="Morpheus installation directory (with bin/ and stemlib/); default: $MORPHEUS_PATH.")
-        install: Literal["auto", "never"] = Field(
-            "auto", description=f"Without 'path' and $MORPHEUS_PATH: 'auto' downloads Morpheus "
+        install: MorpheusInstall = Field(
+            MorpheusInstall.AUTO, description=f"Without 'path' and $MORPHEUS_PATH: 'auto' downloads Morpheus "
                                 f"{morpheus_install.VERSION} and compiles it in SEFLAG's cache on first use (needs a C "
                                 f"compiler and make); 'never' raises an error instead.")
-        language: Literal["auto", "grc", "la"] = Field("auto", description="'auto': the evaluation's language.")
-        select: Literal["first", "last"] = Field("first", description="Which lemma to use if Morpheus returns several.")
-        unknown: Literal["empty", "form"] = Field(
-            "empty", description="Lemma for words Morpheus cannot analyse: empty (scored as wrong) or the word itself.")
-        non_words: Literal["form", "empty"] = Field(
-            "form", description="Lemma for tokens without letters (punctuation, numbers), which are not sent to "
-                                "Morpheus: the token itself (as in UD) or empty.")
+        language: Language | None = Field(None, description="Language of the analysis (default: the evaluation's).")
+        select: LemmaChoice = Field(LemmaChoice.FIRST, description="Which lemma to use if Morpheus returns several.")
+        unknown: FallbackLemma = Field(
+            FallbackLemma.EMPTY,
+            description="Lemma for words Morpheus cannot analyse: empty (scored as wrong) or the word itself.")
+        non_words: FallbackLemma = Field(
+            FallbackLemma.FORM,
+            description="Lemma for tokens without letters (punctuation, numbers), which are not sent to Morpheus: the "
+                        "token itself (as in UD) or empty.")
         batch_size: int = Field(5000, ge=1, description="Words per Morpheus process.")
         timeout: int = Field(600, ge=1, description="Seconds per Morpheus process.")
 
+        _auto = field_validator("language", mode="before")(auto_to_none)
+
     def __init__(self, config: Any, evaluation):
         super().__init__(config, evaluation)
-        language: str = evaluation.language if config.language == "auto" else config.language
-        if language not in ("grc", "la"):
-            raise ConfigError(f"Morpheus supports Ancient Greek (grc) and Latin (la), not '{language}'.")
-        self.language: str = language
+        self.language: Language = config.language or evaluation.language
         self.stats: dict[str, int] = {"words": 0, "unknown": 0, "ambiguous": 0}
         self._root: Path | None = None
 
@@ -82,14 +84,14 @@ class MorpheusBackend(Backend):
             if not (root / "bin" / "morpheus").is_file():
                 raise MissingDependencyError(f"No Morpheus program at {root / 'bin' / 'morpheus'}")
             return root
-        if self.config.install == "never":
+        if self.config.install == MorpheusInstall.NEVER:
             raise MissingDependencyError(
                 "Morpheus not configured: set 'path' or the MORPHEUS_PATH variable, or 'install: auto' to let SEFLAG "
                 "build it. Installation: https://github.com/perseids-tools/morpheus-perseids")
         return morpheus_install.ensure_installed()
 
     def _to_input(self, word: str) -> str:
-        if self.language == "la":
+        if self.language == Language.LATIN:
             return word
         # betacode only converts precomposed characters (NFD input would stay unconverted) and only U+2019/U+0027
         # as the elision mark (beta code '); U+1FBE becomes ι under NFC (see ENCODING.md)
@@ -98,7 +100,7 @@ class MorpheusBackend(Backend):
         return beta.replace("s1", "s").replace("s2", "s").replace("s3", "s")
 
     def _to_output(self, lemma: str) -> str:
-        if self.language == "la":
+        if self.language == Language.LATIN:
             return lemma
         # betacode produces accents with oxia (e.g. U+1F77); NFC turns them into the canonically equivalent
         # tonos forms (U+03AF) used in UD and most Unicode Greek text
@@ -106,7 +108,7 @@ class MorpheusBackend(Backend):
 
     def _analyse(self, words: list[str]) -> list[list[str]]:
         """Returns the lemmas Morpheus proposes for each word (empty list = unknown)."""
-        args: list[str] = [str(self.root / "bin" / "morpheus")] + (["-L"] if self.language == "la" else [])
+        args: list[str] = [str(self.root / "bin" / "morpheus")] + (["-L"] if self.language == Language.LATIN else [])
         env: dict[str, str] = {**os.environ, "MORPHLIB": "stemlib"}
         results: list[list[str]] = []
         for offset in range(0, len(words), self.config.batch_size):
@@ -145,17 +147,17 @@ class MorpheusBackend(Backend):
 
     def predict(self, sentences: list[list[str]]) -> list[Doc]:
         all_words: set[str] = {w for s in sentences for w in s}
-        lemma_of: dict[str, str] = {w: (w if self.config.non_words == "form" else "")
+        lemma_of: dict[str, str] = {w: (w if self.config.non_words == FallbackLemma.FORM else "")
                                     for w in all_words if not any(c.isalpha() for c in w)}
         unique: list[str] = sorted(all_words - lemma_of.keys())
         for word, lemmas in zip(unique, self._analyse(unique), strict=True):
             self.stats["words"] += 1
             if not lemmas:
                 self.stats["unknown"] += 1
-                lemma_of[word] = word if self.config.unknown == "form" else ""
+                lemma_of[word] = word if self.config.unknown == FallbackLemma.FORM else ""
                 continue
             self.stats["ambiguous"] += len(lemmas) > 1
-            lemma_of[word] = self._to_output(lemmas[0] if self.config.select == "first" else lemmas[-1])
+            lemma_of[word] = self._to_output(lemmas[0] if self.config.select == LemmaChoice.FIRST else lemmas[-1])
         vocab = Vocab()
         return [Doc(vocab, words=words, lemmas=[lemma_of[w] for w in words]) for words in sentences]
 

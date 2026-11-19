@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Literal
-
 from pydantic import BaseModel, ConfigDict, Field
 
+from seflag.enums import TagPosition
 from seflag.data.records import EntitySpan
 
 MARKERS: frozenset[str] = frozenset({"B", "I", "E", "S", "L", "U"})
@@ -17,8 +16,8 @@ class TagScheme(BaseModel):
     """How entity tags are written, e.g. ``B-PER`` (prefix) or ``PRS-B`` (suffix)."""
 
     model_config = ConfigDict(extra="forbid")
-    position: Literal["prefix", "suffix"] = Field(
-        "prefix", description="Where the B/I/E/S marker is: 'prefix' (B-PER) or 'suffix' (PER-B).")
+    position: TagPosition = Field(
+        TagPosition.PREFIX, description="Where the B/I/E/S marker is: 'prefix' (B-PER) or 'suffix' (PER-B).")
     separator: str = Field("-", description="Separator between marker and entity type.")
     outside: list[str] = Field(default_factory=lambda: ["O", "0", "_", ""],
                                description="Tags meaning 'not part of an entity'.")
@@ -27,7 +26,7 @@ class TagScheme(BaseModel):
         """'B-PER' -> ('B', 'PER'); 'PER' (IO scheme) -> ('I', 'PER'); outside tags -> None."""
         if tag in self.outside:
             return None
-        if self.position == "prefix":
+        if self.position == TagPosition.PREFIX:
             marker, sep, label = tag.partition(self.separator)
         else:
             label, sep, marker = tag.rpartition(self.separator)

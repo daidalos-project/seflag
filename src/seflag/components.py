@@ -23,21 +23,31 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from pydantic import BaseModel, ValidationError
+
 from seflag import registry
-from seflag.config import EvaluationConfig, load_config, validate_component_params
+from seflag.config import (
+    DatasetSpec,
+    EvaluationConfig,
+    EvaluationOptions,
+    OutputOptions,
+    load_config,
+    validate_component_params,
+)
+from seflag.enums import ComponentKind, Language
 from seflag.errors import ConfigError
 
 
 def build_task(config: EvaluationConfig) -> Any:
     """The configuration's task (a :class:`seflag.tasks.base.Task`)."""
-    component: type = registry.get("tasks", config.task.type)
+    component: type = registry.get(ComponentKind.TASKS, config.task.type)
     return component(validate_component_params(component, config.task.params, "task"), config.options)
 
 
 def build_dataset(config: EvaluationConfig) -> Any:
     """The configuration's dataset: a :class:`seflag.data.base.DatasetAdapter` (sentences) or a
     :class:`seflag.data.lexical.LexicalDataset` (word pairs, multiple-choice items)."""
-    component: type = registry.get("datasets", config.dataset.source)
+    component: type = registry.get(ComponentKind.DATASETS, config.dataset.source)
     return component(validate_component_params(component, config.dataset.params, "dataset"), config)
 
 
@@ -46,7 +56,7 @@ def build_backend(config: EvaluationConfig) -> Any:
     runs in another environment if ``model.launcher`` is set."""
     from seflag.backends.embeddings import EmbeddingBackend
 
-    component: type = registry.get("backends", config.model.backend)
+    component: type = registry.get(ComponentKind.BACKENDS, config.model.backend)
     params = validate_component_params(component, config.model.params, "model")  # validate before launching
     if config.model.launcher is None:
         return component(params, config)
@@ -82,21 +92,33 @@ def _config(source: str | Path | dict[str, Any] | EvaluationConfig, **overrides:
     return load_config(source, **overrides)
 
 
-def load_dataset(source: str | Path | dict[str, Any] | EvaluationConfig, language: str | None = None,
-                 **overrides: Any) -> Any:
+def load_dataset(source: str | Path | dict[str, Any] | BaseModel | EvaluationConfig,
+                 language: Language | str | None = None, **overrides: Any) -> Any:
     """Loads a dataset without running an evaluation.
 
-    ``source`` is a configuration (file, dictionary or :class:`EvaluationConfig`) or only its ``dataset`` section
-    as a dictionary, e.g. ``{"source": "conllu", "path": "data/"}``; a dataset section needs ``language``, and
+    ``source`` is a configuration (file, dictionary or :class:`EvaluationConfig`) or only its ``dataset`` section,
+    as a dictionary (``{"source": "conllu", "path": "data/"}``) or a dataset's typed Config
+    (``ConlluDataset.Config(path="data/")``); a dataset section needs ``language``, and
     relative paths in it are resolved against the current working directory. ``overrides`` update top-level
     sections of a configuration, as in :func:`seflag.load_config`.
     """
-    if isinstance(source, dict) and "source" in source and "dataset" not in source:
+    only_dataset_section: bool = (
+        (isinstance(source, BaseModel) and not isinstance(source, EvaluationConfig))  # DatasetSpec or a typed Config
+        or (isinstance(source, dict) and "source" in source and "dataset" not in source))
+    if only_dataset_section:
         if language is None:
-            raise ConfigError("load_dataset() with a dataset section needs the language, e.g. language='la'.")
-        # placeholders: dataset adapters only use the language and the base directory of the configuration
-        source = {"language": language, "task": "-", "model": {"backend": "-"}, "dataset": source}
-    elif language is not None:
+            raise ConfigError("load_dataset() with a dataset section needs the language, e.g. "
+                              "language=Language.LATIN.")
+        try:
+            dataset: DatasetSpec = DatasetSpec.model_validate(source)
+            lang: Language = Language(language)
+        except (ValidationError, ValueError) as e:
+            raise ConfigError(f"Invalid dataset section or language:\n{e}") from e
+        # dataset adapters only use the language, the options and the base directory of the configuration
+        return build_dataset(EvaluationConfig.model_construct(
+            name=None, description=None, language=lang, dataset=dataset, options=EvaluationOptions(),
+            output=OutputOptions(), base_dir=Path.cwd()))
+    if language is not None:
         overrides["language"] = language
     return build_dataset(_config(source, **overrides))
 

@@ -9,6 +9,12 @@ from spacy.vocab import Vocab
 from seflag import registry
 from seflag.backends.base import Backend
 
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "network: tests that need internet access (skipped without it)")
+
+
+
 SAMPLE_CONLLU = """# sent_id = s1
 # text = Arma virumque cano
 1\tArma\tarma\tNOUN\t_\tCase=Acc|Number=Plur\t3\tobj\t_\t_

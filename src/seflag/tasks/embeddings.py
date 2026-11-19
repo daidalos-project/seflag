@@ -3,16 +3,16 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from seflag.enums import MissingCandidates, OovPolicy, RetrievalDirections
 from seflag.data.lexical import ChoiceItem, WordPair
 from seflag.metrics import pearson, spearman
 from seflag.normalization import get_pipeline
 from seflag.tasks.base import LexicalTask, TaskResult
 
-OovPolicy = Literal["skip", "subwords"]
 OOV_DESCRIPTION: str = ("Words outside the model's vocabulary: 'skip' the item (coverage is reported), or build "
                         "vectors from 'subwords' (fastText models only).")
 
@@ -23,7 +23,7 @@ class _Words:
     def __init__(self, model: Any, options, oov: str):
         self.model = model
         self.normalize = get_pipeline(options.input_normalization)
-        self.subwords: bool = oov == "subwords"
+        self.subwords: bool = oov == OovPolicy.SUBWORDS
         if self.subwords and not model.supports_subwords:
             from seflag.errors import ConfigError
 
@@ -52,7 +52,7 @@ class WordSimilarityTask(LexicalTask):
 
     class Config(BaseModel):
         model_config = ConfigDict(extra="forbid")
-        oov: OovPolicy = Field("skip", description=OOV_DESCRIPTION)
+        oov: OovPolicy = Field(OovPolicy.SKIP, description=OOV_DESCRIPTION)
 
     def evaluate_lexical(self, items: list[WordPair], model: Any) -> TaskResult:
         if any(p.score is None for p in items):
@@ -102,9 +102,11 @@ class WordRetrievalTask(LexicalTask):
     class Config(BaseModel):
         model_config = ConfigDict(extra="forbid")
         k: list[int] = Field(default_factory=lambda: [1, 10], description="Neighbourhood sizes to report.")
-        directions: Literal["forward", "both"] = Field(
-            "forward", description="'forward': word1 -> word2; 'both': also word2 -> word1 (each counted).")
-        oov: OovPolicy = Field("skip", description=OOV_DESCRIPTION + " The retrieved word must be in the vocabulary.")
+        directions: RetrievalDirections = Field(
+            RetrievalDirections.FORWARD,
+            description="'forward': word1 -> word2; 'both': also word2 -> word1 (each counted).")
+        oov: OovPolicy = Field(OovPolicy.SKIP,
+                               description=OOV_DESCRIPTION + " The retrieved word must be in the vocabulary.")
 
     def evaluate_lexical(self, items: list[WordPair], model: Any) -> TaskResult:
         words = _Words(model, self.options, self.config.oov)
@@ -112,7 +114,7 @@ class WordRetrievalTask(LexicalTask):
         queries: list[tuple[str, str]] = []
         for pair in items:
             directions = [(pair.word1, pair.word2)]
-            if self.config.directions == "both":
+            if self.config.directions == RetrievalDirections.BOTH:
                 directions.append((pair.word2, pair.word1))
             for query, answer in directions:
                 query_known: bool = words.known(query)
@@ -123,7 +125,7 @@ class WordRetrievalTask(LexicalTask):
                     words.missing.add(words.normalize(answer))
                 if query_known and answer_key is not None:
                     queries.append((words.normalize(query), answer_key))
-        total: int = len(items) * (2 if self.config.directions == "both" else 1)
+        total: int = len(items) * (2 if self.config.directions == RetrievalDirections.BOTH else 1)
         hits = dict.fromkeys(self.config.k, 0)
         reciprocal: float = 0.0
         examples: list[dict[str, Any]] = []
@@ -150,10 +152,11 @@ class SynonymSelectionTask(LexicalTask):
 
     class Config(BaseModel):
         model_config = ConfigDict(extra="forbid")
-        oov: OovPolicy = Field("skip", description=OOV_DESCRIPTION)
-        missing_candidates: Literal["skip_item", "ignore"] = Field(
-            "skip_item", description="If a wrong candidate is out of vocabulary: 'skip_item' (strict), or 'ignore' "
-                                     "that candidate, which makes the item easier (behaviour of the original script).")
+        oov: OovPolicy = Field(OovPolicy.SKIP, description=OOV_DESCRIPTION)
+        missing_candidates: MissingCandidates = Field(
+            MissingCandidates.SKIP_ITEM,
+            description="If a wrong candidate is out of vocabulary: 'skip_item' (strict), or 'ignore' that candidate, "
+                        "which makes the item easier (behaviour of the original script).")
 
     def evaluate_lexical(self, items: list[ChoiceItem], model: Any) -> TaskResult:
         words = _Words(model, self.options, self.config.oov)
@@ -166,7 +169,7 @@ class SynonymSelectionTask(LexicalTask):
             known = [words.known(c) for c in item.choices]
             if not (words.known(item.target) and known[item.answer]):
                 continue
-            if not all(known) and self.config.missing_candidates == "skip_item":
+            if not all(known) and self.config.missing_candidates == MissingCandidates.SKIP_ITEM:
                 continue
             candidates = [c for c, ok in zip(item.choices, known, strict=True) if ok]
             target = words.normalize(item.target)

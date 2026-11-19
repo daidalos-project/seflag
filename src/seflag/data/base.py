@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict
 from spacy.tokens import Doc
 from spacy.vocab import Vocab
 
+from seflag.enums import Layer
 from seflag.config import EvaluationConfig
 from seflag.data.records import SentenceRecord, check_layers_present, present_layers, record_to_doc
 
@@ -37,7 +38,7 @@ class DatasetAdapter(ABC):
         """Information that identifies the exact version of the data, stored with the results."""
         return {}
 
-    def load_docs(self, vocab: Vocab, layers: set[str], max_sentences: int | None = None) -> list[Doc]:
+    def load_docs(self, vocab: Vocab, layers: set[Layer], max_sentences: int | None = None) -> list[Doc]:
         records: Iterator[SentenceRecord] = self.records()
         if max_sentences is not None:
             records = itertools.islice(records, max_sentences)
@@ -45,7 +46,7 @@ class DatasetAdapter(ABC):
         check_layers_present(loaded, layers)
         return [record_to_doc(vocab, r, layers) for r in loaded]
 
-    def docs(self, layers: Iterable[str] | None = None, max_sentences: int | None = None,
+    def docs(self, layers: Iterable[Layer | str] | None = None, max_sentences: int | None = None,
              vocab: Vocab | None = None) -> list[Doc]:
         """The gold sentences as spaCy ``Doc`` objects, e.g. for use outside of an evaluation.
 
@@ -53,7 +54,7 @@ class DatasetAdapter(ABC):
         annotated in the data. Sentence ids, texts and subsets are kept in ``Doc.user_data``.
         """
         records: list[SentenceRecord] = list(itertools.islice(self.records(), max_sentences))
-        chosen: set[str] = set(layers) if layers is not None else present_layers(records)
+        chosen: set[Layer] = {Layer(layer) for layer in layers} if layers is not None else present_layers(records)
         check_layers_present(records, chosen)
         vocab = vocab or Vocab()
         return [record_to_doc(vocab, r, chosen) for r in records]
