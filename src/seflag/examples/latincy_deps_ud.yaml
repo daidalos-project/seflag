@@ -4,8 +4,6 @@ name: latincy-lg-deps-ud-latin
 language: la
 task:
   type: dependency_parsing
-  # LatinCy writes "Verbform" instead of UD's "VerbForm" (relevant for MLAS)
-  predicted_feature_names: {Verbform: VerbForm}
 dataset:
   source: huggingface
   repo: daidalos-project/latin_treebanks_ud_test

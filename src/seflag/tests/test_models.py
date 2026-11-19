@@ -1,23 +1,41 @@
-"""Regression tests against real models; skipped unless the models are installed. Run with: pytest -m models"""
+"""Regression tests against real models; skipped unless the models are installed. Run with: pytest -m models
 
+The expected scores are those published in the package README and ENCODING.md. They hold for the model versions
+that SEFLAG's install hints pin (backends/spacy.py), with spaCy 3.8; other versions are skipped, not failed.
+"""
+
+import os
+from importlib.metadata import version
 from pathlib import Path
 
 import pytest
 import spacy.util
+from packaging.version import Version
 
 from seflag import load_config, run
+from seflag.backends import morpheus_install
+from seflag.backends.spacy import GRECY_RELEASE, LATINCY_WHEELS
 
 EXAMPLES = Path(__file__).parents[1] / "examples"
 pytestmark = pytest.mark.models
 
+MODEL_VERSIONS = {"la_core_web_lg": LATINCY_WHEELS["lg"][0], "grc_proiel_lg": GRECY_RELEASE}
 
-@pytest.mark.parametrize("config_name, model, expected", [
-    ("latincy_lemma_ud.yaml", "la_core_web_lg", 0.8905),  # README: 0.8843 incl. multiword-token lines
-    ("grecy_lemma_ud.yaml", "grc_proiel_lg", 0.9056),  # README: 0.9055 incl. multiword-token lines
-])
-def test_readme_results(config_name, model, expected):
+
+def require_model(model: str) -> None:
     if model not in spacy.util.get_installed_models():
         pytest.skip(f"{model} not installed")
+    if version(model) != MODEL_VERSIONS[model] or Version(spacy.__version__) < Version("3.8"):
+        pytest.skip(f"the expected scores are for {model} {MODEL_VERSIONS[model]} with spaCy 3.8 "
+                    f"(installed: {version(model)}, spaCy {spacy.__version__})")
+
+
+@pytest.mark.parametrize("config_name, model, expected", [
+    ("latincy_lemma_ud.yaml", "la_core_web_lg", 0.9196),
+    ("grecy_lemma_ud.yaml", "grc_proiel_lg", 0.9047),
+])
+def test_readme_results(config_name, model, expected):
+    require_model(model)
     config = load_config(EXAMPLES / config_name, output={"dir": None})
     if "path" in config.dataset.params and not config.resolve_path(config.dataset.params["path"]).exists():
         pytest.skip("repository data not available")
@@ -25,20 +43,19 @@ def test_readme_results(config_name, model, expected):
 
 
 @pytest.mark.parametrize("config_name, model, expected", [
-    ("latincy_morph_ud.yaml", "la_core_web_lg", 0.5464),
-    ("grecy_morph_ud.yaml", "grc_proiel_lg", 0.6776),
+    ("latincy_morph_ud.yaml", "la_core_web_lg", 0.7090),
+    ("grecy_morph_ud.yaml", "grc_proiel_lg", 0.6649),
 ])
 def test_morphology(config_name, model, expected):
     test_readme_results(config_name, model, expected)
 
 
 @pytest.mark.parametrize("config_name, model, expected", [
-    ("latincy_deps_ud.yaml", "la_core_web_lg", 0.7023),
-    ("grecy_deps_ud.yaml", "grc_proiel_lg", 0.5704),
+    ("latincy_deps_ud.yaml", "la_core_web_lg", 0.7660),
+    ("grecy_deps_ud.yaml", "grc_proiel_lg", 0.5663),
 ])
 def test_dependency_parsing(config_name, model, expected):
-    if model not in spacy.util.get_installed_models():
-        pytest.skip(f"{model} not installed")
+    require_model(model)
     result = run(load_config(EXAMPLES / config_name, output={"dir": None}))
     assert result.metrics["las"] == pytest.approx(expected, abs=5e-4)
     # gold sentence boundaries: the parser must not split sentences into several trees
@@ -54,12 +71,11 @@ def test_model_sentence_segmentation_creates_multiple_roots():
 
 
 @pytest.mark.parametrize("config_name, model, expected", [
-    ("latincy_ner_herodotos.yaml", "la_core_web_lg", 0.5015),
-    ("grecy_ner_yousef.yaml", "grc_proiel_lg", 0.6652),
+    ("latincy_ner_herodotos.yaml", "la_core_web_lg", 0.8519),
+    ("grecy_ner_yousef.yaml", "grc_proiel_lg", 0.6704),
 ])
 def test_ner(config_name, model, expected):
-    if model not in spacy.util.get_installed_models():
-        pytest.skip(f"{model} not installed")
+    require_model(model)
     config = load_config(EXAMPLES / config_name, output={"dir": None})
     assert run(config).metrics["f1"] == pytest.approx(expected, abs=5e-4)
 
@@ -76,14 +92,11 @@ def test_ner_backends(config_name, expected):
 
 @pytest.mark.parametrize("config_name, expected", [
     ("morpheus_lemma_ud_latin.yaml", 0.7253),
-    ("morpheus_lemma_ud_greek.yaml", 0.8613),
+    ("morpheus_lemma_ud_greek.yaml", 0.8755),
 ])
 def test_morpheus(config_name, expected):
-    import os
-    from pathlib import Path
-
-    if not (Path(os.environ.get("MORPHEUS_PATH", "/nonexistent")) / "bin" / "morpheus").is_file():
-        pytest.skip("Morpheus not installed (set MORPHEUS_PATH)")
+    if not (morpheus_install.installed() or "MORPHEUS_PATH" in os.environ):
+        pytest.skip("Morpheus not installed (built on first use, or set MORPHEUS_PATH)")
     assert run(load_config(EXAMPLES / config_name, output={"dir": None})).metrics["accuracy"] == \
         pytest.approx(expected, abs=5e-4)
 

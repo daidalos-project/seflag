@@ -1,5 +1,5 @@
-# Reproduces the greCy (grc_proiel_lg) lemmatization result from the repository README
-# on the test sets of all Ancient Greek UD 2.15 treebanks, hosted on the Hugging Face Hub.
+# greCy (grc_proiel_lg) lemmatization on the test sets of all Ancient Greek UD 2.15 treebanks, hosted on the
+# Hugging Face Hub. The result for greCy 3.7.5 (GitHub release, spaCy 3.8) is in the package README (90.47%).
 name: grecy-proiel-lg-lemma-ud-greek
 language: grc
 task: lemmatization

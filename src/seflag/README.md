@@ -56,7 +56,7 @@ model:
   backend: spacy
   name: la_core_web_lg
 options:
-  label_normalization: [v_to_u, j_to_i]   # LatinCy writes lemmas with u and i; some treebanks use v and j
+  label_normalization: [v_to_u, j_to_i]   # the treebanks differ in u/v and i/j spelling; don't count it as an error
 ```
 
 ```bash
@@ -119,9 +119,12 @@ it produces:
 
 | Model | UD Latin | UD Ancient Greek |
 |:--|--:|--:|
-| LatinCy (la_core_web_lg) | 89.05 | – |
-| greCy (grc_proiel_lg) | – | 90.56 |
-| Morpheus | 69.12 | 86.13 |
+| LatinCy (la_core_web_lg) | 91.96 | – |
+| greCy (grc_proiel_lg) | – | 90.47 |
+| Morpheus | 69.12 | 87.55 |
+
+These are the scores of LatinCy 3.9.8 and greCy 3.7.5 (installed with the commands above, spaCy 3.8). SEFLAG v1.0.0
+reported results for LatinCy 3.7.4, which is no longer distributed.
 
 Each cell is a complete evaluation with its own result file; a cell that fails (e.g. a model that is not installed)
 is reported in the table instead of stopping the run.

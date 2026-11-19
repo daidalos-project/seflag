@@ -1,5 +1,5 @@
-# Reproduces the LatinCy lemmatization result from the repository README
-# on the test sets of all Latin UD 2.15 treebanks, hosted on the Hugging Face Hub.
+# LatinCy lemmatization on the test sets of all Latin UD 2.15 treebanks, hosted on the Hugging Face Hub.
+# The result for la_core_web_lg 3.9.8 is in the package README (91.96%); v1.0.0 of SEFLAG used LatinCy 3.7.4.
 name: latincy-lg-lemma-ud-latin
 language: la
 task: lemmatization

@@ -238,7 +238,8 @@ def load_config(source: str | Path | dict[str, Any], **overrides: Any) -> Evalua
     ``source`` is either a path to a YAML/JSON file or an already parsed dictionary. Relative paths
     inside a configuration file are resolved relative to the directory of that file, except ``output.dir``,
     which is relative to the current working directory.
-    ``overrides`` replace top-level sections, e.g. ``load_config(path, options={"max_sentences": 10})``.
+    ``overrides`` are merged into the top-level sections (a dictionary updates the keys it names, anything else
+    replaces the section), e.g. ``load_config(path, options={"max_sentences": 10})``.
     """
     base_dir: Path = Path.cwd()
     if isinstance(source, dict):

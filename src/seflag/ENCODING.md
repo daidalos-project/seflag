@@ -14,10 +14,10 @@ against them.
 
 | Discrepancy | Where | Measured effect |
 |---|---|---|
-| Greek elision mark: each treebank uses a different one (U+0313, U+2019, U+1FBF); greCy only recognises U+02BC, Morpheus only U+2019/U+0027, the BERT tokenizer turns U+02BC/U+1FBD/U+1FBF into `[UNK]` | UD Greek, NER (Yousef), all Greek models | greCy lemma accuracy 0.9056 → 0.9226 with `input_normalization: [elision_to_u02bc]`; Morpheus 0.8613 → 0.8755 after the backend fix; 719 NER test tokens (1.8%) become `[UNK]` (no measurable effect on NER) |
-| Latin u/v and i/j: LatinCy outputs u/i lemmas, Morpheus v/j lemmas, the UD treebanks use both | UD Latin, LatinCy, Morpheus | LatinCy +1.2 points with `label_normalization: [v_to_u, j_to_i]` (PROIEL +5.2, Perseus +3.7); Morpheus +3.9 points |
-| Lemma case: CIRCSE, ITTB and UDante lowercase all lemmas, including proper names; other treebanks and LatinCy capitalize them | UD Latin | LatinCy another +1.0 points with `lowercase` (CIRCSE +2.8) |
-| NFD input: Greek models are trained on NFC | greCy, Greek fastText (Morpheus before the fix) | greCy lemma accuracy 0.92 → 0.28, UPOS identical on only 47% of tokens; fastText coverage 70% → 0% |
+| Greek elision mark: each treebank uses a different one (U+0313, U+2019, U+1FBF); greCy only recognises U+02BC, Morpheus only U+2019/U+0027, the BERT tokenizer turns U+02BC/U+1FBD/U+1FBF into `[UNK]` | UD Greek, NER (Yousef), all Greek models | greCy lemma accuracy 0.9047 → 0.9217 with `input_normalization: [elision_to_u02bc]`; Morpheus 0.8613 → 0.8755 after the backend fix; 719 NER test tokens (1.8%) become `[UNK]` (no measurable effect on NER) |
+| Latin u/v and i/j: LatinCy lemmas follow the spelling of the form, Morpheus outputs v/j lemmas, the UD treebanks use both | UD Latin, LatinCy, Morpheus | LatinCy +1.5 points with `label_normalization: [v_to_u, j_to_i]` (UDante +5.1, LLCT +3.9); Morpheus +3.9 points |
+| Lemma case: CIRCSE, ITTB and UDante lowercase all lemmas, including proper names; the other treebanks capitalize them, LatinCy only sometimes | UD Latin | LatinCy another +2.5 points with `lowercase` (LLCT +8.4, PROIEL +3.8) |
+| NFD input: Greek models are trained on NFC | greCy, Greek fastText (Morpheus before the fix) | greCy lemma accuracy 0.88 → 0.11, UPOS identical on only 47% of tokens; fastText coverage 70% → 0% |
 | Case of Greek words: the Greek fastText vocabulary is lowercased, AGREE is not | AGREE, Greek fastText | Coverage 70.2% → 82.7% when matched case-insensitively (`case_insensitive: true`) |
 | Oxia instead of tonos, sigma variants, Latin letters inside Greek words, stray combining marks | Herodotos (Pliny), NER, UD Greek Perseus lemmas | Few tokens; `nfc`, `final_sigma`, `lunate_sigma` repair the forms. The affected gold lemmas cannot be matched by any model |
 
@@ -137,30 +137,38 @@ elision conventions into its lemmas. LatinCy was trained on UD treebanks with di
 normalizes them away (`normer`). There are no cards yet for `UGARIT/grc-ner-bert`, `UGARIT/grc-ner-xlmr`, the two
 fastText models and Morpheus.
 
-### LatinCy `la_core_web_lg` 3.7.4
+### LatinCy `la_core_web_lg` 3.9.8
 
-* **`normer`:** the first pipeline component replaces v→u and j→i (both cases) in `token.norm_`, which the model uses
-  as a feature (`la_core_web_lg/functions.py`). Input spelling with u/v or i/j therefore makes no difference to
-  tagging and parsing.
-* **Lemma output:** always in u/i spelling (`vox` → `uox`, `Vergilius` → `Uergilius`, `iuvenis` → `iuuenis`).
-  Proper names are capitalized. Characters the model does not change are copied from the form, including macrons
-  (`canō` → `canō`) and NFD sequences.
+* **Tokens:** the first component, `enclitic_splitter`, splits enclitics off words (`Romaque`, `neque`), also where
+  the treebanks keep one word. That changes the gold tokens, so the examples exclude it.
+* **`normer`:** replaces v→u and j→i (both cases) in `token.norm_`, which the model uses as a feature. Input spelling
+  with u/v or i/j should therefore make little difference to tagging and parsing.
+* **Lemma output:** follows the spelling of the form. u-spelled forms get u lemmas (`uocem` → `uox`), v-spelled
+  forms get v lemmas (`vocem` → `vox`, `vel` → `vel` where the gold lemma is `uel`). j is mostly kept (`jam` → `jam`,
+  but `major` → `maior`). Version 3.7.4 always wrote u/i lemmas. Proper names are often lowercased (`Petrus` →
+  `petrus`, `Deus` → `deus`, the most frequent errors after u/v), but not always (`Vergilius`, `Caesar`). Characters
+  the model does not change are copied from the form, including macrons (`canō` → `canō`).
+* **Features:** UD feature names (`VerbForm`; 3.7.4 wrote `Verbform`).
 * **Vectors:** floret (hashed subwords), so there is no vocabulary to inspect.
-* **Sensitivity:** NFD input made no difference (Latin is ASCII): lemma accuracy 0.8785 for both on a 1,500-sentence
+* **Sensitivity:** NFD input made no difference (Latin is ASCII): lemma accuracy 0.9762 for both on a 1,500-sentence
   sample.
 * **Measured on UD Latin, lemma accuracy:**
 
   | `label_normalization` | total | CIRCSE | ITTB | LLCT | Perseus | PROIEL | UDante |
   |---|---|---|---|---|---|---|---|
-  | none (example config) | 0.8905 | 0.7865 | 0.9783 | 0.9654 | 0.7768 | 0.8695 | 0.8233 |
-  | `v_to_u`, `j_to_i` | 0.9024 | 0.7865 | 0.9783 | 0.9681 | 0.8138 | 0.9219 | 0.8321 |
-  | `v_to_u`, `j_to_i`, `lowercase` | 0.9122 | 0.8141 | 0.9783 | 0.9693 | 0.8347 | 0.9248 | 0.8515 |
+  | none (example config) | 0.9196 | 0.9757 | 0.9818 | 0.8485 | 0.8903 | 0.9010 | 0.8725 |
+  | `v_to_u`, `j_to_i` | 0.9350 | 0.9757 | 0.9818 | 0.8877 | 0.8920 | 0.9069 | 0.9230 |
+  | `v_to_u`, `j_to_i`, `lowercase` | 0.9603 | 0.9757 | 0.9818 | 0.9716 | 0.9162 | 0.9448 | 0.9230 |
 
 ### greCy `grc_proiel_lg` 3.7.5
 
-* **Input:** expects NFC. On a 1,500-sentence sample with identical tokens, NFD input lowers lemma accuracy from 0.92
-  to 0.28, and only 47% of the UPOS tags stay the same. The tokenizer and the floret vectors see different
-  character sequences.
+SEFLAG installs this version from greCy's GitHub release (built for spaCy 3.8), whose scores differ slightly from
+the earlier build on the Hugging Face Hub (lemma accuracy 0.9047 instead of 0.9056). The table of elision marks and
+the UPOS comparison below were measured with the Hub build.
+
+* **Input:** expects NFC. On the first 1,500 sentences with identical tokens, NFD input lowers lemma accuracy from
+  0.88 to 0.11 (Hub build: 0.92 to 0.28 on another sample), and only 47% of the UPOS tags stay the same. The
+  tokenizer and the floret vectors see different character sequences.
 * **Elision:** recognized only with U+02BC MODIFIER LETTER APOSTROPHE. Lemma accuracy on the elided tokens of the UD
   test sets, when their mark is replaced by each variant (forms with ῤ not included):
 
@@ -171,8 +179,8 @@ fastText models and Morpheus.
   | PTNK (U+1FBF), 67 tokens | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 1.000 |
 
   With `input_normalization: [elision_to_u02bc]`, which also turns `παῤ` into `παρʼ`, lemma accuracy on the whole
-  UD Greek test set rises from 0.9056 to 0.9226: Perseus 0.8730 → 0.9015, PROIEL 0.9591 → 0.9663, PTNK 0.9030 →
-  0.9091.
+  UD Greek test set rises from 0.9047 to 0.9217: Perseus 0.8735 → 0.9019, PROIEL 0.9572 → 0.9644, PTNK 0.9005 →
+  0.9070.
 * **Lemma output copies the form's encoding:** oxia stays oxia (`λόγος` with U+1F79), σ at the end and lunate ϲ
   are kept (`Σωκράτησ`), and U+1FBE is kept. Elided lemmas come out with U+0313, U+1FBF or U+2019, following the
   training data. Some names get a grave accent (`Λὼτ`). A grave in the form is turned into an acute in the lemma
@@ -248,7 +256,7 @@ options remove the discrepancies:
 
 | Example | Discrepancy | Remedy |
 |---|---|---|
-| `latincy_lemma_ud`, `matrix_lemma_ud` | gold u/v, j and lemma case differ per treebank; LatinCy outputs u/i | `label_normalization: [v_to_u, j_to_i]` (+ `lowercase`) |
+| `latincy_lemma_ud`, `matrix_lemma_ud` | gold u/v, j and lemma case differ per treebank; LatinCy follows the form's spelling and is inconsistent in case | `label_normalization: [v_to_u, j_to_i]` (+ `lowercase`) |
 | `morpheus_lemma_ud_latin` | Morpheus outputs v/j lemmas | add `v_to_u`, `j_to_i` to `label_normalization` |
 | `grecy_*_ud` | elision marks of the data are not U+02BC | `input_normalization: [elision_to_u02bc]` |
 | `morpheus_lemma_ud_greek` | elision marks, NFD | handled by the backend |
@@ -282,7 +290,7 @@ All normalizers can be used as `input_normalization` (applied to the tokens the 
 
 Integrating this information into the datasheets and model cards is sensible. The datasheets only state "UTF-8",
 and the model cards say nothing about encoding, yet the measurements above show differences of 1–5 accuracy points
-that depend only on code points, and in one case a drop from 0.92 to 0.28. A fixed set of fields would make these
+that depend only on code points, and in one case a drop from 0.88 to 0.11. A fixed set of fields would make these
 conventions visible before an evaluation is run:
 
 * **Datasets:** normalization form; Greek: accent forms (tonos/oxia), elision mark, final and lunate sigma, iota
