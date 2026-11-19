@@ -17,8 +17,8 @@ Other tools work the same way, as long as the command ends in a Python interpret
 installed.
 Docker, for example, can in principle run a backend with non-Python dependencies such as Morpheus (which SEFLAG
 otherwise builds itself on Linux and macOS, see :mod:`seflag.backends.morpheus_install`), from an
-image you build yourself with the seflag package and Morpheus inside. The temporary directory must be mounted at the same
-path (shown for Linux, where it is under /tmp), and ``path`` refers to the location inside the container::
+image you build yourself with the seflag package and Morpheus inside. The temporary directory must be mounted at
+the same path (shown for Linux, where it is under /tmp), and ``path`` refers to the location inside the container::
 
     model:
       backend: morpheus
@@ -44,11 +44,14 @@ from seflag.errors import MissingDependencyError
 class LauncherSpec(BaseModel):
     model_config = ConfigDict(extra="forbid")
     requirements: list[str] | None = Field(
-        None, description="Run the backend via uv in a separate environment with the seflag package and these packages.")
+        None,
+        description="Run the backend via uv in a separate environment with the seflag package and these packages.")
     python: str | None = Field(
         None, description="Python version for the uv environment, e.g. '3.12' (default: that of the current Python).")
     command: list[str] | None = Field(
-        None, description="Command that starts a Python interpreter with the seflag package installed, e.g. conda run ... python.")
+        None,
+        description="Command that starts a Python interpreter with the seflag package installed, e.g. conda run ... "
+                    "python.")
 
     @model_validator(mode="after")
     def _one_mode(self) -> LauncherSpec:
@@ -94,4 +97,4 @@ def python_command(spec: LauncherSpec) -> list[str]:
     command += ["--with-editable" if editable else "--with", seflag_req]
     for requirement in spec.requirements or []:
         command += ["--with", requirement]
-    return command + ["python"]
+    return [*command, "python"]

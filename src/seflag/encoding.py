@@ -13,13 +13,14 @@ from __future__ import annotations
 import unicodedata as ud
 from collections import Counter
 from dataclasses import dataclass, field
-from typing import Any, Iterable
+from typing import Any
+from collections.abc import Iterable
 
 from seflag.normalization import ELISION_MARKS, elision_position
 
-GREEK_PUNCTUATION: str = "··;;‧⋅⸱"
-INVISIBLE: str = " ​‌‍﻿­\t  "
-APOSTROPHE_LIKE: str = ELISION_MARKS + "‘ʽ`´ʹ′῾"
+GREEK_PUNCTUATION: str = "\u00b7\u0387\u037e;‧⋅⸱"
+INVISIBLE: str = "\u00a0\u200b\u200c\u200d\ufeff\u00ad\t \u2009"
+APOSTROPHE_LIKE: str = ELISION_MARKS + "\u2018\u02bd`´ʹ′\u1ffe"
 MAX_EXAMPLES: int = 5
 
 # string-level properties: key -> description, in report order
@@ -27,10 +28,10 @@ FEATURES: dict[str, str] = {
     "capitalized": "starts with an upper-case letter",
     "mixed_greek_latin": "contains both Greek and Latin letters (homoglyphs, e.g. Latin C as sigma)",
     "other_script": "contains letters of another script (e.g. Cyrillic)",
-    "elided": "elided Greek word (elision mark at the end, incl. ῤ for ρ + U+0313)",
+    "elided": "elided Greek word (elision mark at the end, incl. \u1fe4 for ρ + U+0313)",
     "medial_sigma_at_end": "Greek word ending in σ instead of ς",
     "final_sigma_inside": "ς inside a word",
-    "lunate_sigma": "contains lunate sigma ϲ/Ϲ",
+    "lunate_sigma": "contains lunate sigma \u03f2/\u03f9",
     "iota_subscript": "contains iota subscript (ypogegrammeni)",
     "prosgegrammeni": "contains U+1FBE GREEK PROSGEGRAMMENI (NFC turns it into ι)",
     "grave_accent": "contains a grave accent",
@@ -131,14 +132,14 @@ class EncodingStats:
             "elided": elision_position(text) is not None,
             "medial_sigma_at_end": greek and len(letters) > 1 and text[-1] == "σ",
             "final_sigma_inside": "ς" in text[:-1] and any(c.isalpha() for c in text[text.index("ς") + 1:]),
-            "lunate_sigma": "ϲ" in text or "Ϲ" in text,
-            "iota_subscript": "ͅ" in nfd,
-            "prosgegrammeni": "ι" in text,
-            "grave_accent": greek and "̀" in nfd,
-            "unaccented_greek": greek and len(letters) > 1 and not any(m in nfd for m in "̀́͂"),
+            "lunate_sigma": "\u03f2" in text or "\u03f9" in text,
+            "iota_subscript": "\u0345" in nfd,
+            "prosgegrammeni": "\u1fbe" in text,
+            "grave_accent": greek and "\u0300" in nfd,
+            "unaccented_greek": greek and len(letters) > 1 and not any(m in nfd for m in "\u0300\u0301\u0342"),
             "v": "v" in text or "V" in text,
             "j": "j" in text or "J" in text,
-            "macron_or_breve": "̄" in nfd or "̆" in nfd,
+            "macron_or_breve": "\u0304" in nfd or "\u0306" in nfd,
             "ligature": any(ch in text for ch in "æœÆŒ"),
             "letters_and_digits": bool(letters) and any(ch.isdigit() for ch in text),
         }

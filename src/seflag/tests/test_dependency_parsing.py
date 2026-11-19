@@ -38,7 +38,8 @@ class ScriptedBackend(Backend):
 
 @pytest.fixture
 def evaluate(tmp_path, monkeypatch):
-    monkeypatch.setitem(registry.BUILTINS["backends"], "scripted", "seflag.tests.test_dependency_parsing:ScriptedBackend")
+    monkeypatch.setitem(registry.BUILTINS["backends"], "scripted",
+                        "seflag.tests.test_dependency_parsing:ScriptedBackend")
     (tmp_path / "gold.conllu").write_text(GOLD, encoding="utf-8")
 
     def _evaluate(words=BASE, **task):

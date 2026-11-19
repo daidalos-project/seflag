@@ -4,6 +4,7 @@ import pytest
 
 from seflag import load_config, run
 from seflag.errors import ConfigError
+from seflag.tests.conftest import LowercaseBackend
 
 
 def config(conllu_dir, backend, task="lemmatization", **extra):
@@ -94,3 +95,26 @@ def test_relative_output_dir_is_relative_to_working_directory(tmp_path, conllu_d
     matrix = run_matrix(load_matrix(configs / "matrix.yaml"))
     assert matrix.path.parent == work / "results"
     assert not (configs / "results").exists()
+
+
+class MisalignedBackend(LowercaseBackend):
+    """Test backend that breaks gold tokenization: lowercases the tokens themselves, or drops the last sentence."""
+
+    drop_sentence = False
+
+    def predict(self, sentences):
+        if self.drop_sentence:
+            return super().predict(sentences[:-1])
+        return super().predict([[w.lower() for w in words] for words in sentences])
+
+
+def test_misaligned_predictions_are_reported(conllu_dir, monkeypatch):
+    from seflag import registry
+    from seflag.errors import PredictionError
+
+    monkeypatch.setitem(registry.BUILTINS["backends"], "misaligned", "seflag.tests.test_runner:MisalignedBackend")
+    with pytest.raises(PredictionError, match=r"sentence 1: .* token 1: expected 'Arma', found 'arma'"):
+        run(config(conllu_dir, "misaligned", output={"dir": None}))
+    monkeypatch.setattr(MisalignedBackend, "drop_sentence", True)
+    with pytest.raises(PredictionError, match="returned 3 documents for 4 sentences"):
+        run(config(conllu_dir, "misaligned", output={"dir": None}))

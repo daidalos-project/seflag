@@ -15,7 +15,8 @@ class LemmatizationTask(TokenLabelTask):
         model_config = ConfigDict(extra="forbid")
         exclude_upos: list[str] = Field(
             default_factory=list,
-            description="Gold UPOS tags whose tokens are not scored, e.g. [PUNCT, NUM]. Requires UPOS in the gold data.")
+            description="Gold UPOS tags whose tokens are not scored, e.g. [PUNCT, NUM]. Requires UPOS in the gold "
+                        "data.")
 
     @property
     def required_layers(self) -> set[str]:

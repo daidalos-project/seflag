@@ -104,7 +104,8 @@ class TransformersBackend(Backend):
         for offset in range(0, len(chunks), self.config.batch_size):
             batch = chunks[offset:offset + self.config.batch_size]
             inputs = self._tokenizer([sentences[si][a:b] for si, a, b in batch], is_split_into_words=True,
-                                     truncation=True, max_length=self._limit() + self._tokenizer.num_special_tokens_to_add(),
+                                     truncation=True,
+                                     max_length=self._limit() + self._tokenizer.num_special_tokens_to_add(),
                                      padding=True, return_tensors="pt")
             with torch.no_grad():
                 logits = self._model(**{k: v.to(self._device) for k, v in inputs.items()}).logits
@@ -122,7 +123,7 @@ class TransformersBackend(Backend):
         labels: list[list[str]] = self._predict_labels(sentences)
         vocab = Vocab()
         docs: list[Doc] = []
-        for words, tags in zip(sentences, labels):
+        for words, tags in zip(sentences, labels, strict=True):
             if self.config.layer == "upos":
                 doc = Doc(vocab, words=words, pos=[t if t in SPACY_POS_IDS else "" for t in tags])
             elif self.config.layer == "xpos":

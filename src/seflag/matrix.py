@@ -49,6 +49,7 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from seflag import __version__, registry
+from seflag.components import section_label
 from seflag.config import EvaluationConfig, OutputOptions, load_config
 from seflag.errors import ConfigError, SeflagError
 from seflag.runner import EvaluationResult, run
@@ -141,11 +142,7 @@ def _merge(base: dict[str, Any], update: dict[str, Any]) -> dict[str, Any]:
 
 
 def _default_label(kind: str, section: dict[str, Any] | None, index: int) -> str:
-    keys = ("name", "repo", "path", "source") if kind == "dataset" else ("name", "path", "backend")
-    for key in keys:
-        if section and section.get(key):
-            return str(section[key])
-    return f"{kind} {index + 1}"
+    return section_label(kind, section) or f"{kind} {index + 1}"
 
 
 def _labels(kind: str, entries: list[AxisEntry], base: dict[str, Any]) -> list[str]:
@@ -193,8 +190,8 @@ def load_matrix(source: str | Path | dict[str, Any], **overrides: Any) -> Matrix
     model_labels: list[str] = _labels("model", models, base)
 
     cells: list[Cell] = []
-    for d_entry, d_label in zip(datasets, dataset_labels):
-        for m_entry, m_label in zip(models, model_labels):
+    for d_entry, d_label in zip(datasets, dataset_labels, strict=True):
+        for m_entry, m_label in zip(models, model_labels, strict=True):
             if d_entry.language and m_entry.language and d_entry.language != m_entry.language:
                 cells.append(Cell(d_label, m_label, None,
                                   f"model language {m_entry.language}, dataset language {d_entry.language}"))
@@ -270,7 +267,7 @@ class MatrixResult:
         for c in self.cells:
             if c.dataset == dataset and c.result is not None:
                 names.update(dict.fromkeys(s for s in c.result.by_subset if s))
-        return [""] + list(names)
+        return ["", *names]
 
     def _columns(self) -> list[tuple[str, str, str]]:
         return [(d, s, m) for d in self.dataset_labels for s in self._subsets(d) for m in self.metrics]
@@ -364,3 +361,39 @@ def run_matrix(matrix: MatrixConfig, fail_fast: bool = False) -> MatrixResult:
         result.save(directory)
         logger.info("Matrix results written to %s", directory)
     return result
+
+
+def table_from_results(results: list[EvaluationResult], table: TableOptions | None = None,
+                       name: str = "results") -> MatrixResult:
+    """Arranges saved evaluation results like a matrix (rows: models, columns: datasets), e.g. for a README table.
+
+    Labels come from each result's configuration (dataset repository/path, model name). If several results have the
+    same dataset and model, the most recent one is used, with a warning if their settings (task, options) differ.
+    """
+    from seflag.components import section_label
+
+    latest: dict[tuple[str, str], EvaluationResult] = {}
+    for result in sorted(results, key=lambda r: str(r.provenance.get("timestamp", ""))):
+        dataset: str = section_label("dataset", result.config.get("dataset")) or "dataset"
+        language: str = result.language
+        model: str = section_label("model", result.config.get("model")) or result.name
+        key = (f"{dataset} ({language})" if language else dataset, model)
+        if key in latest:
+            older: EvaluationResult = latest[key]
+            differing: list[str] = [s for s in ("task", "options", "dataset", "model")
+                                    if older.config.get(s) != result.config.get(s)]
+            if differing:  # e.g. another label_normalization: the table shows only the newer settings
+                logger.warning("%s × %s: %s replaces the older %s, which has different settings (%s)", *key,
+                               result.path, older.path, ", ".join(differing))
+            else:
+                logger.info("%s × %s: using %s instead of the older %s", *key, result.path, older.path)
+        latest[key] = result
+    dataset_labels: list[str] = sorted({d for d, _ in latest})
+    model_labels: list[str] = sorted({m for _, m in latest})
+    cells: list[CellResult] = []
+    for d in dataset_labels:
+        for m in model_labels:
+            cells.append(CellResult(d, m, "ok", result=latest[(d, m)]) if (d, m) in latest
+                         else CellResult(d, m, "not_applicable", "no result"))
+    return MatrixResult(name=name, cells=cells, table_options=table or TableOptions(), dataset_labels=dataset_labels,
+                        model_labels=model_labels, source={"results": [str(r.path) for r in latest.values()]})

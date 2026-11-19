@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
-from typing import Callable
+from collections.abc import Callable
 
 Normalizer = Callable[[str], str]
 
@@ -94,7 +94,8 @@ NORMALIZERS: dict[str, tuple[Normalizer, str]] = {
     "elision_to_apostrophe": (elision_to("'"), "Greek: elision marks of elided words -> U+0027 APOSTROPHE "
                                                "(Greek fastText vectors)"),
     "final_sigma": (_final_sigma, "Greek: σ at the end of a word -> ς"),
-    "lunate_sigma": (_lunate_sigma, "Greek: lunate sigma ϲ/Ϲ (and Latin C/c used as one in Greek words) -> σ/ς/Σ"),
+    "lunate_sigma": (_lunate_sigma,
+                     "Greek: lunate sigma \u03f2/\u03f9 (and Latin C/c used as one in Greek words) -> σ/ς/Σ"),
     "strip_homonym_digits": (
         lambda s: re.sub(r"(?<=\D)#?\d+$", "", s),
         "Remove trailing homonym numbers from lemmas, e.g. 'sum1' or 'sum#1' (Morpheus) -> 'sum'",

@@ -7,6 +7,8 @@ in their own ``pyproject.toml``::
 
     [project.entry-points."seflag.backends"]
     my_backend = "my_package.module:MyBackend"
+
+For experiments (e.g. in a notebook), :func:`register` adds a component class directly.
 """
 
 from __future__ import annotations
@@ -45,6 +47,21 @@ BUILTINS: dict[str, dict[str, str]] = {
 }
 
 
+# components added at runtime with register(): kind -> name -> class
+_REGISTERED: dict[str, dict[str, type]] = {kind: {} for kind in BUILTINS}
+
+
+def register(kind: str, name: str, component: type) -> None:
+    """Makes a component class available under ``name`` for the rest of the session.
+
+    ``kind`` is ``datasets``, ``backends`` or ``tasks``; afterwards configurations can use it, e.g.
+    ``model: {backend: <name>}``. Registered components take precedence over built-ins and entry points.
+    """
+    if kind not in _REGISTERED:
+        raise ValueError(f"Unknown component kind '{kind}'; expected one of {', '.join(_REGISTERED)}")
+    _REGISTERED[kind][name] = component
+
+
 def _import(target: str) -> Any:
     module_name, _, attr = target.partition(":")
     return getattr(importlib.import_module(module_name), attr)
@@ -55,11 +72,14 @@ def available(kind: str) -> dict[str, str]:
     found: dict[str, str] = dict(BUILTINS[kind])
     for ep in entry_points(group=f"seflag.{kind}"):
         found.setdefault(ep.name, ep.value)
+    found.update({name: f"{c.__module__}:{c.__qualname__}" for name, c in _REGISTERED[kind].items()})
     return found
 
 
 def get(kind: str, name: str) -> Any:
     """Resolves a component class by its registered name."""
+    if name in _REGISTERED[kind]:
+        return _REGISTERED[kind][name]
     components: dict[str, str] = available(kind)
     if name not in components:
         raise ConfigError(f"Unknown {kind[:-1]} '{name}'. Available: {', '.join(sorted(components))}")

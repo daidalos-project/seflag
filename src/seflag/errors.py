@@ -12,3 +12,7 @@ class MissingDependencyError(SeflagError):
 
 class DataError(SeflagError):
     """A dataset could not be read or does not contain what the task needs."""
+
+
+class PredictionError(SeflagError):
+    """A backend returned predictions that do not align with its input (wrong number of sentences or tokens)."""

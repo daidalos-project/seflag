@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import contextlib
 from pathlib import Path
-from typing import Any, Iterator, Literal
+from typing import Any, Literal
+from collections.abc import Iterator
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -19,7 +21,8 @@ SEFLAG_SENTENCE_FIELDS: tuple[str, ...] = ("comments", "multiword_tokens", "empt
 # default column names for datasets with one list column per annotation layer (as e.g. 'universal_dependencies')
 COLUMN_DEFAULTS: dict[str, str] = {
     "form": "tokens", "lemma": "lemmas", "upos": "upos", "xpos": "xpos", "feats": "feats",
-    "head": "heads", "deprel": "deprels", "deps": "deps", "misc": "misc", "ner": "ner_tags", "sent_id": "sent_id", "text": "text", "subset": "subset",
+    "head": "heads", "deprel": "deprels", "deps": "deps", "misc": "misc", "ner": "ner_tags", "sent_id": "sent_id",
+    "text": "text", "subset": "subset",
 }
 
 
@@ -178,7 +181,8 @@ class HuggingFaceDataset(DatasetAdapter):
                                     f"has {len(column_values)} entries for {n} tokens.")
                 decode = decoders.get(field)
                 values[field] = [_clean(decode(v) if decode and v is not None else v) for v in column_values]
-            tokens = [TokenRecord(form=form, **{f: values[f][i] for f in values}) for i, form in enumerate(tokens_value)]
+            tokens = [TokenRecord(form=form, **{f: values[f][i] for f in values})
+                      for i, form in enumerate(tokens_value)]
             entities = None
             if ner_column:
                 tags: list = row[ner_column] or []
@@ -199,9 +203,8 @@ class HuggingFaceDataset(DatasetAdapter):
             return info
         info.update(name=self.config.name, fingerprint=self.dataset()._fingerprint)
         if self.config.repo not in LOCAL_BUILDERS:
-            try:
+            with contextlib.suppress(Exception):  # offline: the datasets fingerprint is still recorded
                 info["resolved_revision"] = _require_hub().HfApi().dataset_info(
                     self.config.repo, revision=self.config.revision).sha
-            except Exception:  # offline; the datasets fingerprint is still recorded
                 pass
         return info

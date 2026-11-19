@@ -1,5 +1,5 @@
 """Command line interface: ``seflag run`` (single evaluations and matrices), ``list``, ``convert-conllu``,
-``export``, ``inspect-encoding`` and ``cache``."""
+``export``, ``inspect-encoding``, ``table`` and ``cache``."""
 
 from __future__ import annotations
 
@@ -45,7 +45,7 @@ def _cmd_list(args: argparse.Namespace) -> int:
 
     for kind, field in (("tasks", "task"), ("datasets", "dataset.source"), ("backends", "model.backend")):
         print(f"{kind} ({field}):")
-        for name, target in sorted(registry.available(kind).items()):
+        for name in sorted(registry.available(kind)):
             try:
                 component = registry.get(kind, name)
                 print(f"  {name:<16} {getattr(component, 'description', '')}")
@@ -89,12 +89,10 @@ def _cmd_convert_conllu(args: argparse.Namespace) -> int:
 
 
 def _cmd_export(args: argparse.Namespace) -> int:
-    from seflag.config import load_config, validate_component_params
+    from seflag.components import load_dataset
     from seflag.data.convert import records_to_dataset, verify_records
 
-    config = load_config(args.config)
-    component = registry.get("datasets", config.dataset.source)
-    dataset = component(validate_component_params(component, config.dataset.params, "dataset"), config)
+    dataset = load_dataset(args.config)
     records = list(dataset.records())
     target: Path = Path(args.output) / "data" / f"{args.split}.parquet"
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -112,29 +110,24 @@ def _cmd_export(args: argparse.Namespace) -> int:
 
 def _inspect_targets(path: str, with_model: bool) -> list[tuple[str, str, object]]:
     """(kind, label, component instance) for the dataset(s) and, if requested, model(s) of a configuration file."""
-    from seflag.config import load_config, validate_component_params
+    from seflag.components import build_backend, build_dataset, section_label
+    from seflag.config import load_config
     from seflag.matrix import is_matrix, load_matrix
 
-    configs = [(f"{c.dataset} × {c.model}", c.config) for c in load_matrix(path).cells if c.config] \
-        if is_matrix(path) else [("", load_config(path))]
+    configs = [c.config for c in load_matrix(path).cells if c.config] if is_matrix(path) else [load_config(path)]
     targets: list[tuple[str, str, object]] = []
     seen: set[str] = set()
-    for _, config in configs:
+    for config in configs:
         dataset_key: str = f"dataset {config.dataset.source} {config.dataset.params}"
         if dataset_key not in seen:
             seen.add(dataset_key)
-            component = registry.get("datasets", config.dataset.source)
-            label: str = str(config.dataset.params.get("repo") or config.dataset.params.get("path")
-                             or config.dataset.params.get("url") or config.dataset.source)
-            targets.append(("dataset", f"{label} ({config.language})",
-                            component(validate_component_params(component, config.dataset.params, "dataset"), config)))
+            label: str | None = section_label("dataset", config.model_dump()["dataset"])
+            targets.append(("dataset", f"{label} ({config.language})", build_dataset(config)))
         model_key: str = f"model {config.model.backend} {config.model.params}"
         if with_model and model_key not in seen:
             seen.add(model_key)
-            component = registry.get("backends", config.model.backend)
-            label = str(config.model.params.get("name") or config.model.params.get("url") or config.model.backend)
-            targets.append(("model", f"{label} ({config.model.backend})",
-                            component(validate_component_params(component, config.model.params, "model"), config)))
+            label = section_label("model", config.model_dump()["model"])
+            targets.append(("model", f"{label} ({config.model.backend})", build_backend(config)))
     return targets
 
 
@@ -167,6 +160,34 @@ def _cmd_inspect_encoding(args: argparse.Namespace) -> int:
                     print("\n".join(values.format()))
     if args.json:
         print(json.dumps(report, ensure_ascii=False, indent=2))
+    return 0
+
+
+def _cmd_table(args: argparse.Namespace) -> int:
+    from seflag.errors import DataError
+    from seflag.matrix import TableOptions, table_from_results
+    from seflag.runner import EvaluationResult
+
+    results: list[EvaluationResult] = []
+    for given in map(Path, args.paths):
+        if given.is_dir():  # result files anywhere below, e.g. matrix cells; other JSON files are skipped
+            for path in sorted(given.rglob("*.json")):
+                try:
+                    results.append(EvaluationResult.load(path))
+                except DataError:
+                    continue
+        else:
+            results.append(EvaluationResult.load(given))
+    if not results:
+        print("error: no SEFLAG result files found", file=sys.stderr)
+        return 1
+    options = TableOptions(metrics=args.metric, by_subset=args.by_subset, percent=args.percent, digits=args.digits)
+    table: str = table_from_results(results, options).table()
+    if args.output:
+        Path(args.output).write_text(table + "\n", encoding="utf-8")
+        print(f"wrote {args.output} ({len(results)} result file(s))")
+    else:
+        print(table)
     return 0
 
 
@@ -265,6 +286,17 @@ def build_parser() -> argparse.ArgumentParser:
     p_enc.add_argument("--max-sentences", type=int, help="Only inspect the first N sentences or items.")
     p_enc.add_argument("--json", action="store_true", help="Print the full statistics as JSON.")
     p_enc.set_defaults(func=_cmd_inspect_encoding)
+
+    p_table = sub.add_parser("table", help="Markdown table (models × datasets) from saved result files.")
+    p_table.add_argument("paths", nargs="+",
+                         help="Result files, or directories searched for them (e.g. seflag_results).")
+    p_table.add_argument("--metric", action="append", help="Metric to show (repeatable; nested with dots, e.g. "
+                                                            "unlabeled.f1). Default: each task's headline metric.")
+    p_table.add_argument("--by-subset", action="store_true", help="One column per subset (e.g. treebank).")
+    p_table.add_argument("--percent", action="store_true", help="Show scores between 0 and 1 as percentages.")
+    p_table.add_argument("--digits", type=int, default=4, help="Decimal places (default: 4).")
+    p_table.add_argument("--output", help="Write the table to this file instead of printing it.")
+    p_table.set_defaults(func=_cmd_table)
 
     p_cache = sub.add_parser("cache", help="Show or delete files downloaded by URL (datasets, embedding models) "
                                            "and tools built by SEFLAG (Morpheus).")

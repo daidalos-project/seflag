@@ -27,6 +27,7 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Text Processing :: Linguistic",
+    "Typing :: Typed",
 ]
 # Core = everything needed to run an evaluation with spaCy-based models on CoNLL-U data.
 # spaCy is core because spaCy Doc/Token objects are SEFLAG's internal data model.
@@ -69,3 +70,15 @@ include = ["src/seflag", "pyproject.toml", "README.md", "LICENSE"]
 [tool.pytest.ini_options]
 testpaths = ["src/seflag/tests"]
 markers = ["models: tests that need installed spaCy models (slow)"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+include = ["src/seflag/**/*.py"]   # the repository root also holds the original evaluation scripts
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "UP", "RUF", "SIM", "C4", "PLE", "PLW"]
+ignore = [
+    "RUF001", "RUF002", "RUF003",   # Greek letters and diacritics in strings and comments are intended
+    "PLW2901",                      # loop values are deliberately normalized in place (line.strip(), ...)
+]

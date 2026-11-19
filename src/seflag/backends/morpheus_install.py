@@ -116,7 +116,7 @@ def _compile(src: Path, compiler: str, log_path: Path) -> None:
     for directory, make_target in TARGETS:
         args: list[str] = ["make", "-C", str(src / directory), f"-j{jobs}", make_target, f"CC={compiler}",
                            "LEX=false", "LEXLIB="]
-        done = subprocess.run(args, capture_output=True, text=True, env=env)
+        done = subprocess.run(args, capture_output=True, text=True, env=env, check=False)
         log += [" ".join(args), done.stdout, done.stderr]
         if done.returncode != 0:
             log_path.write_text("\n".join(log), encoding="utf-8")
@@ -128,7 +128,7 @@ def _smoke_test(root: Path) -> None:
     """Analyses one Greek and one Latin word, which also catches stem library files the build cannot read."""
     for args, word, lemma in (([], "lo/gos", "lo/gos"), (["-L"], "amo", "amo")):
         done = subprocess.run([str(root / "bin" / "morpheus"), *args], input=word + "\n", capture_output=True,
-                              text=True, cwd=root, env={**os.environ, "MORPHLIB": "stemlib"}, timeout=60)
+                              text=True, cwd=root, env={**os.environ, "MORPHLIB": "stemlib"}, timeout=60, check=False)
         if f">{lemma}</hdwd>" not in done.stdout:
             raise SeflagError(f"The freshly built Morpheus does not analyse '{word}' correctly "
                               f"(exit code {done.returncode}): {(done.stdout + done.stderr)[:500]}")

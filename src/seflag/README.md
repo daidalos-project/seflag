@@ -145,6 +145,7 @@ them for any configuration.
 |---|---|
 | `seflag run <config>...` | Run evaluations or matrices (`--max-sentences`, `--output`, `--no-save`, `--fail-fast`) |
 | `seflag list [-v]` | Available tasks, data sources, backends, normalizers and their options |
+| `seflag table <results>...` | Markdown table (models × datasets) from saved result files or directories |
 | `seflag inspect-encoding <config>...` | Unicode conventions of a configuration's data and embedding vocabulary |
 | `seflag convert-conllu <files> --output <dir>` | Convert CoNLL-U files into SEFLAG's Parquet layout for the Hub |
 | `seflag export <config> --output <dir>` | Export any configured dataset to that layout |
@@ -162,6 +163,97 @@ model:
   launcher:
     requirements: [flair==0.15.1]
 ```
+
+## Python API
+
+Besides `load_config` and `run`, the package gives direct access to its data loading, models and results:
+
+```python
+from pathlib import Path
+
+import seflag
+
+# SEFLAG's data access on its own: a configuration file, or just its dataset section
+dataset = seflag.load_dataset({"source": "huggingface", "repo": "daidalos-project/latin_treebanks_ud_test",
+                               "revision": "14ab3708f8f55eaa700ac5828cb3351fe5346474", "split": "test"},
+                              language="la")
+docs = dataset.docs()               # gold sentences as spaCy Docs, with every annotation layer of the data
+records = list(dataset.records())   # or as SentenceRecord objects (CoNLL-U semantics)
+
+model = seflag.load_backend("latincy_lemma.yaml")
+predicted = model.predict([["Gallia", "est", "omnis", "divisa", "in", "partes", "tres"]])
+
+# saved results, e.g. to compare runs or build a table for a paper
+results = [seflag.EvaluationResult.load(p) for p in sorted(Path("seflag_results").glob("*.json"))]
+print(seflag.table_from_results(results).table())
+```
+
+## Extending SEFLAG
+
+Datasets, models and tasks are components with the same structure: a class with a nested pydantic `Config` (its
+options in the configuration file), a `description`, and one main method. A new model, for example, wraps any NLP
+tool behind `predict()`:
+
+```python
+from pydantic import BaseModel, ConfigDict
+from spacy.tokens import Doc
+from spacy.vocab import Vocab
+
+import seflag
+from seflag.backends.base import Backend
+
+
+class LowercaseLemmatizer(Backend):
+    """Baseline: the lemma of a word is the word in lower case."""
+
+    description = "Lower-case baseline lemmatizer"
+
+    class Config(BaseModel):            # options of the configuration's model section
+        model_config = ConfigDict(extra="forbid")
+        keep_proper_names: bool = False
+
+    def predict(self, sentences: list[list[str]]) -> list[Doc]:
+        vocab = Vocab()
+        lemmas = [[w if self.config.keep_proper_names and w[:1].isupper() else w.lower() for w in words]
+                  for words in sentences]
+        return [Doc(vocab, words=words, lemmas=lem) for words, lem in zip(sentences, lemmas, strict=True)]
+
+    def metadata(self) -> dict:          # stored in the provenance of every result
+        return {"name": "lowercase-baseline", "keep_proper_names": self.config.keep_proper_names}
+
+
+seflag.register("backends", "lowercase", LowercaseLemmatizer)
+result = seflag.run(seflag.load_config({
+    "language": "la", "task": "lemmatization",
+    "dataset": {"source": "conllu", "path": "my_treebank/"},
+    "model": {"backend": "lowercase", "keep_proper_names": True},
+}))
+print(result.metrics["accuracy"])
+```
+
+The rules for each kind of component:
+
+* **Models** (`seflag.backends.base.Backend`) receive the gold tokens and must return one `Doc` per sentence with
+  exactly these tokens; SEFLAG checks this after every prediction (`check_predictions`) and reports the first
+  difference. Optional: `label_inventory()` (labels the model can predict), `metadata()` (versions for the
+  provenance). Word embeddings implement `seflag.backends.embeddings.EmbeddingBackend` instead.
+* **Datasets** (`seflag.data.base.DatasetAdapter`) yield `seflag.data.records.SentenceRecord` objects from
+  `records()` and identify the exact data version in `fingerprint()`.
+* **Tasks** (`seflag.tasks.base.Task`) declare the gold annotation layers they need (`required_layers`) and compare
+  gold with predicted Docs in `evaluate()`, returning a `TaskResult`; `primary_metric` names the score shown in
+  tables.
+
+`seflag.register()` makes a component available in the current Python session. To share it, put it in a package
+and declare an entry point; SEFLAG then finds it without any registration (also in separate environments started
+by a `launcher`):
+
+```toml
+[project.entry-points."seflag.backends"]
+lowercase = "my_package.lemmatizers:LowercaseLemmatizer"
+```
+
+The built-in components in `seflag/backends/`, `seflag/data/` and `seflag/tasks/` are complete examples, and
+`seflag list -v` shows how SEFLAG sees a registered component.
 
 ## Data and licenses
 

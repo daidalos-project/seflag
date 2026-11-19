@@ -114,7 +114,7 @@ class MorpheusBackend(Backend):
             # one word per line; whitespace inside a word would break the line protocol
             payload: str = "\n".join(self._to_input(w).replace(" ", "").replace("\t", "") or "_" for w in batch) + "\n"
             done = subprocess.run(args, input=payload, capture_output=True, text=True, env=env, cwd=self.root,
-                                  timeout=self.config.timeout)
+                                  timeout=self.config.timeout, check=False)
             if done.returncode != 0:
                 raise SeflagError(f"Morpheus failed ({done.returncode}): {done.stderr[:500]}")
             root = ET.fromstring(done.stdout)
@@ -148,7 +148,7 @@ class MorpheusBackend(Backend):
         lemma_of: dict[str, str] = {w: (w if self.config.non_words == "form" else "")
                                     for w in all_words if not any(c.isalpha() for c in w)}
         unique: list[str] = sorted(all_words - lemma_of.keys())
-        for word, lemmas in zip(unique, self._analyse(unique)):
+        for word, lemmas in zip(unique, self._analyse(unique), strict=True):
             self.stats["words"] += 1
             if not lemmas:
                 self.stats["unknown"] += 1

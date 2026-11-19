@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict
 from spacy.tokens import Doc
 
 from seflag.config import EvaluationConfig
+from seflag.errors import PredictionError
 
 
 class Backend(ABC):
@@ -36,3 +37,25 @@ class Backend(ABC):
     def metadata(self) -> dict[str, Any]:
         """Model name, version etc., stored with the results."""
         return {}
+
+
+def check_predictions(sentences: list[list[str]], predicted: list[Doc], backend: str) -> None:
+    """Raises :class:`PredictionError` unless ``predicted`` has one ``Doc`` per sentence with exactly its tokens.
+
+    The runner calls this after every prediction; backend authors can use it in their own tests.
+    """
+    if len(predicted) != len(sentences):
+        raise PredictionError(
+            f"Backend '{backend}' returned {len(predicted)} documents for {len(sentences)} sentences.")
+    for number, (words, doc) in enumerate(zip(sentences, predicted, strict=True), start=1):
+        tokens: list[str] = [token.text for token in doc]
+        if tokens == words:
+            continue
+        position: int = next((i for i, (a, b) in enumerate(zip(words, tokens, strict=False)) if a != b),
+                             min(len(words), len(tokens)))
+        expected: str = repr(words[position]) if position < len(words) else "(end of sentence)"
+        found: str = repr(tokens[position]) if position < len(tokens) else "(end of sentence)"
+        raise PredictionError(
+            f"Backend '{backend}' changed the tokens of sentence {number}: {len(words)} tokens given, {len(tokens)} "
+            f"returned; first difference at token {position + 1}: expected {expected}, found {found}. Backends must "
+            "return exactly the given tokens, so that predictions align with the gold standard.")

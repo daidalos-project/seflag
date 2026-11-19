@@ -6,6 +6,16 @@ on:
   pull_request:
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff
+      - run: ruff check   # rules in pyproject.toml
+
   core:
     # the seflag package without optional extras; tests for missing extras and models skip themselves
     runs-on: ubuntu-latest
@@ -31,3 +41,15 @@ jobs:
           python-version: "3.11"
       - run: pip install ".[test,hf,morpheus,embeddings]"
       - run: pytest -q
+
+  ml:
+    # transformers and flair backends with CPU-only PyTorch; the tests use tiny models built on the fly
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - run: pip install ".[test,transformers,flair]"
+      - run: pytest -q src/seflag/tests/test_backends.py

@@ -124,7 +124,7 @@ class WordRetrievalTask(LexicalTask):
                 if query_known and answer_key is not None:
                     queries.append((words.normalize(query), answer_key))
         total: int = len(items) * (2 if self.config.directions == "both" else 1)
-        hits = {k: 0 for k in self.config.k}
+        hits = dict.fromkeys(self.config.k, 0)
         reciprocal: float = 0.0
         examples: list[dict[str, Any]] = []
         for query, answer in queries:
@@ -168,7 +168,7 @@ class SynonymSelectionTask(LexicalTask):
                 continue
             if not all(known) and self.config.missing_candidates == "skip_item":
                 continue
-            candidates = [c for c, ok in zip(item.choices, known) if ok]
+            candidates = [c for c, ok in zip(item.choices, known, strict=True) if ok]
             target = words.normalize(item.target)
             sims = {c: model.similarity(target, words.normalize(c), words.subwords) for c in candidates}
             best: float = max(sims.values())

@@ -181,6 +181,15 @@ def record_to_doc(vocab: Vocab, record: SentenceRecord, layers: set[str]) -> Doc
     return doc
 
 
+def present_layers(records: list[SentenceRecord]) -> set[str]:
+    """The annotation layers (keys of :data:`LAYERS`) that are annotated for at least one token or sentence."""
+    found: set[str] = {"entities"} if any(r.entities is not None for r in records) else set()
+    for layer, names in LAYERS.items():
+        if names and any(getattr(t, n) is not None for r in records for t in r.tokens for n in names):
+            found.add(layer)
+    return found
+
+
 def check_layers_present(records: list[SentenceRecord], layers: set[str]) -> None:
     """Raises if a required layer is not annotated for any token (e.g. a dataset without lemmas)."""
     for layer in sorted(layers):

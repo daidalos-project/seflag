@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import platform
 import sys
 from datetime import datetime, timezone
@@ -17,10 +18,8 @@ def package_versions(extra: list[str] | None = None) -> dict[str, str]:
     for name in (*TRACKED_PACKAGES, *(extra or [])):
         if not name or "/" in name:  # e.g. a model given as a directory path rather than a package
             continue
-        try:
+        with contextlib.suppress(PackageNotFoundError, ValueError):  # not installed, or not a package name
             versions[name] = version(name)
-        except (PackageNotFoundError, ValueError):
-            pass
     return versions
 
 

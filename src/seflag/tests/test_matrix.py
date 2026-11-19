@@ -101,7 +101,7 @@ def test_matrix_with_shared_dataset(conllu_dir, fake_backend):
     data["output"] = {"dir": None}
     result = run_matrix(load_matrix(data))
     assert result.dataset_labels == [str(conllu_dir)]
-    with pytest.raises(ConfigError, match="'matrix.models' or a shared 'model'"):
+    with pytest.raises(ConfigError, match=r"'matrix\.models' or a shared 'model'"):
         load_matrix({"task": "lemmatization", "language": "la", "dataset": data["dataset"], "matrix": {}})
 
 

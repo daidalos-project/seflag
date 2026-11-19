@@ -5,10 +5,10 @@ import pytest
 
 pytest.importorskip("datasets")
 
-from seflag import load_config, run  # noqa: E402
-from seflag.data.convert import (conllu_to_dataset_dict, split_from_filename, verify_roundtrip,  # noqa: E402
+from seflag import load_config, run
+from seflag.data.convert import (conllu_to_dataset_dict, split_from_filename, verify_roundtrip,
                                  write_parquet)
-from seflag.data.records import SentenceRecord  # noqa: E402
+from seflag.data.records import SentenceRecord
 
 
 def evaluate(backend, **dataset):

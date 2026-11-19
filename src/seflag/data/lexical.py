@@ -141,7 +141,8 @@ class WordPairsDataset(LexicalDataset):
         pairs: list[WordPair] = []
         for path in self.resolver.files():
             subset: str | None = path.stem if self.config.subset_by_file else None
-            pairs += self._json_pairs(path, subset) if self.config.format == "json" else self._tabular_pairs(path, subset)
+            json: bool = self.config.format == "json"
+            pairs += self._json_pairs(path, subset) if json else self._tabular_pairs(path, subset)
         return pairs
 
 

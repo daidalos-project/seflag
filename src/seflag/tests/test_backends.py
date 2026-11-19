@@ -60,7 +60,7 @@ def test_morpheus_greek_betacode_and_nfc(morpheus):
     lemmas = [t.lemma_ for t in docs[0]]
     assert lemmas == ["λόγος", "καί"]
     assert all(unicodedata.is_normalized("NFC", lemma) for lemma in lemmas)
-    assert "ί" not in lemmas[1]  # no oxia: tonos as in UD
+    assert "\u1f77" not in lemmas[1]  # no oxia: tonos as in UD
 
 
 def test_morpheus_greek_input_nfc_and_elision(morpheus):
@@ -121,6 +121,55 @@ def test_morpheus_auto_install_needs_build_tools(morpheus_source, monkeypatch):
     assert morpheus_install.installed() is None
 
 
+# --- flair ------------------------------------------------------------------------------------------------
+
+class FakeTagger:
+    """Stands in for a flair SequenceTagger: labels sentences through flair's own API, without loading a model."""
+
+    def __init__(self, tag_type, spans):
+        from flair.data import Dictionary
+
+        self.tag_type, self.predict_spans = tag_type, spans
+        self.label_dictionary = Dictionary(add_unk=True)
+        for label in (["O", "S-PER", "B-LOC", "E-LOC", "<START>", "<STOP>"] if spans else ["NOUN", "VERB", "X"]):
+            self.label_dictionary.add_item(label)
+
+    def predict(self, sentences, mini_batch_size):
+        for sentence in sentences:
+            if self.predict_spans:
+                sentence[0:1].add_label(self.tag_type, "PER")
+                sentence[1:3].add_label(self.tag_type, "LOC")
+            else:
+                for i, token in enumerate(sentence):
+                    token.add_label(self.tag_type, "NOUN" if i % 2 == 0 else "VERB")
+
+
+def flair_backend(tagger, **params):
+    from seflag.backends.flair import FlairBackend
+
+    config = load_config({"language": "grc", "task": "ner", "model": {"backend": "flair", "name": "x"},
+                          "dataset": {"source": "conllu", "path": "x"}})
+    backend = FlairBackend(FlairBackend.Config(name="x", **params), config)
+    backend._tagger = tagger
+    return backend
+
+
+def test_flair_backend_entities_and_tags():
+    pytest.importorskip("flair")
+    words = ["Σωκράτης", "ἐν", "Ἀθήναις", "ἦν"]
+    backend = flair_backend(FakeTagger("ner", spans=True))
+    doc = backend.predict([words])[0]
+    assert [(e.text, e.label_) for e in doc.ents] == [("Σωκράτης", "PER"), ("ἐν Ἀθήναις", "LOC")]
+    assert backend.label_inventory("entities") == {"PER", "LOC"}
+    assert backend.label_inventory("upos") is None
+    tags = flair_backend(FakeTagger("upos", spans=False))
+    doc = tags.predict([words])[0]
+    assert [t.pos_ for t in doc] == ["NOUN", "VERB", "NOUN", "VERB"]
+    assert tags.label_inventory("upos") == {"NOUN", "VERB", "X"}
+    xpos = flair_backend(FakeTagger("pos-fine", spans=False), layer="xpos")
+    assert [t.tag_ for t in xpos.predict([words])[0]] == ["NOUN", "VERB", "NOUN", "VERB"]
+
+
 # --- transformers -------------------------------------------------------------------------------------------
 
 @pytest.fixture
@@ -133,7 +182,8 @@ def tiny_token_classifier(tmp_path):
     labels = ["O", "B-PER", "I-PER", "B-LOC"]
     config = transformers.BertConfig(vocab_size=len(vocab), hidden_size=8, num_hidden_layers=1,
                                      num_attention_heads=1, intermediate_size=8, max_position_embeddings=64,
-                                     id2label=dict(enumerate(labels)), label2id={l: i for i, l in enumerate(labels)})
+                                     id2label=dict(enumerate(labels)),
+                                     label2id={label: i for i, label in enumerate(labels)})
     model = transformers.BertForTokenClassification(config)
     model.save_pretrained(tmp_path)
     tokenizer.save_pretrained(tmp_path)

@@ -39,25 +39,25 @@ def test_metrics():
 
 
 @pytest.mark.parametrize("text, expected", [
-    ("δ’", "δʼ"),                        # δ’ (UD PROIEL)
-    ("ἀλλ̓", "ἀλλʼ"),  # ἀλλ̓ (UD Perseus)
-    ("ἐπ᾿", "ἐπʼ"),            # ἐπ᾿ (UD PTNK)
-    ("δι᾽", "διʼ"),            # δι᾽: elided words can end in a vowel
-    ("δύ̓", "δύʼ"),            # δύ̓
-    ("παῤ", "παρʼ"),      # παῤ: NFC merged ρ + U+0313 (UD Perseus)
+    ("δ\u2019", "δ\u02bc"),                        # δ’ (UD PROIEL)
+    ("ἀλλ\u0313", "ἀλλ\u02bc"),  # ἀλλ̓ (UD Perseus)
+    ("ἐπ\u1fbf", "ἐπ\u02bc"),            # ἐπ᾿ (UD PTNK)
+    ("δι\u1fbd", "δι\u02bc"),            # δι᾽: elided words can end in a vowel
+    ("δύ\u0313", "δύ\u02bc"),            # δύ̓
+    ("πα\u1fe4", "παρ\u02bc"),      # παῤ: NFC merged ρ + U+0313 (UD Perseus)
     (unicodedata.normalize("NFD", "οὐ"), unicodedata.normalize("NFD", "οὐ")),  # breathing
-    ("ῤ", "ῤ"), ("’", "’"), ("l'", "l'"), ("κ᾽ἀγώ", "κ᾽ἀγώ"),
+    ("\u1fe4", "\u1fe4"), ("\u2019", "\u2019"), ("l'", "l'"), ("κ\u1fbdἀγώ", "κ\u1fbdἀγώ"),
 ])
 def test_elision_normalizer(text, expected):
     assert get_pipeline(["elision_to_u02bc"])(text) == expected
 
 
 def test_elision_targets_and_sigma_normalizers():
-    assert get_pipeline(["elision_to_u2019"])("δʼ") == "δ’"
-    assert get_pipeline(["elision_to_apostrophe"])("δ̓") == "δ'"
+    assert get_pipeline(["elision_to_u2019"])("δ\u02bc") == "δ\u2019"
+    assert get_pipeline(["elision_to_apostrophe"])("δ\u0313") == "δ'"
     final = get_pipeline(["final_sigma"])
     assert [final(w) for w in ["δοκεῖσ", "σ", "Σ", "abs"]] == ["δοκεῖς", "σ", "Σ", "abs"]
     assert final(unicodedata.normalize("NFD", "λόγοσ")) == unicodedata.normalize("NFD", "λόγος")
     lunate = get_pipeline(["lunate_sigma"])
-    assert [lunate(w) for w in ["ϲοφίαϲ", "Ϲω", "διόC", "Cωκράτηϲ", "Caesar", "c"]] == \
+    assert [lunate(w) for w in ["\u03f2οφία\u03f2", "\u03f9ω", "διόC", "Cωκράτη\u03f2", "Caesar", "c"]] == \
         ["σοφίας", "Σω", "διός", "Σωκράτης", "Caesar", "c"]

@@ -38,7 +38,8 @@ class FlairBackend(Backend):
         model_config = ConfigDict(extra="forbid")
         name: str = Field(description="Hub repository id, or path to a local model file.")
         revision: str | None = Field(None, description="Hub revision; pin a commit hash for reproducible results.")
-        filename: str | None = Field(None, description=f"Model file in the repository (default: first of {MODEL_FILES}).")
+        filename: str | None = Field(
+            None, description=f"Model file in the repository (default: first of {MODEL_FILES}).")
         layer: Literal["auto", "entities", "upos", "xpos"] = Field(
             "auto", description="What the tagger predicts; 'auto': entities for span taggers, else from tag type.")
         tag_type: str | None = Field(None, description="flair label type (default: the tagger's own tag type).")
@@ -93,14 +94,14 @@ class FlairBackend(Backend):
         from flair.data import Sentence
 
         flair_sentences = [Sentence(words) for words in sentences]
-        for words, sentence in zip(sentences, flair_sentences):
+        for words, sentence in zip(sentences, flair_sentences, strict=True):
             if len(sentence) != len(words):
                 raise SeflagError(f"flair changed the tokenization of {words[:5]}...")
         self.tagger.predict(flair_sentences, mini_batch_size=self.config.batch_size)
         vocab = Vocab()
         docs: list[Doc] = []
         layer, tag_type = self.layer, self.tag_type
-        for words, sentence in zip(sentences, flair_sentences):
+        for words, sentence in zip(sentences, flair_sentences, strict=True):
             if layer == "entities":
                 doc = Doc(vocab, words=words)
                 doc.ents = [Span(doc, span.tokens[0].idx - 1, span.tokens[-1].idx, label=span.get_label(tag_type).value)
@@ -125,7 +126,7 @@ class FlairBackend(Backend):
 
     def metadata(self) -> dict[str, Any]:
         flair = _require_flair()
-        tagger = self.tagger
+        _ = self.tagger  # loads the model, so that _model_path is known
         resolved = self._model_path.parent.name if self._model_path and "snapshots" in self._model_path.parts else None
         return {"name": self.config.name, "revision": self.config.revision, "resolved_revision": resolved,
                 "file": self._model_path.name if self._model_path else None, "tag_type": self.tag_type,

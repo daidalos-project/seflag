@@ -74,7 +74,7 @@ def verify_records(records: list[SentenceRecord], parquet_file: Path) -> list[st
     problems: list[str] = []
     if len(rows) != len(records):
         problems.append(f"{len(rows)} rows in Parquet, {len(records)} records")
-    for i, (row, record) in enumerate(zip(rows, records)):
+    for i, (row, record) in enumerate(zip(rows, records, strict=False)):  # length checked above
         if SentenceRecord.from_dict(row) != record:
             problems.append(f"row {i} ({record.sent_id!r}) differs from the source record")
             if len(problems) >= 10:
@@ -116,7 +116,7 @@ def verify_roundtrip(paths: list[Path], parquet_files: dict[str, Path], default_
             actual: str = "".join(record_to_conllu(r) for r in records)
             if actual != expected:
                 exp_lines, act_lines = expected.split("\n"), actual.split("\n")
-                line = next((i for i, (a, b) in enumerate(zip(exp_lines, act_lines)) if a != b),
+                line = next((i for i, (a, b) in enumerate(zip(exp_lines, act_lines, strict=False)) if a != b),
                             min(len(exp_lines), len(act_lines)))
                 problems.append(f"{path.name}: differs from line {line + 1}: "
                                 f"{exp_lines[line] if line < len(exp_lines) else '<end>'!r} vs. "

@@ -83,7 +83,8 @@ class FileResolver:
             try:
                 from huggingface_hub import snapshot_download
             except ImportError as e:
-                raise MissingDependencyError("Reading from the Hub needs huggingface_hub: pip install 'seflag[hf]'") from e
+                raise MissingDependencyError(
+                    "Reading from the Hub needs huggingface_hub: pip install 'seflag[hf]'") from e
             patterns: list[str] = []
             for entry in self.entries:
                 entry = entry.strip("/")

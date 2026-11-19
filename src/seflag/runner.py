@@ -13,8 +13,10 @@ from typing import Any
 from spacy.tokens import Doc
 from spacy.vocab import Vocab
 
-from seflag import provenance, registry
-from seflag.config import EvaluationConfig, validate_component_params
+from seflag import provenance
+from seflag.components import build_backend, build_dataset, build_task
+from seflag.config import EvaluationConfig
+from seflag.backends.base import check_predictions
 from seflag.backends.embeddings import EmbeddingBackend
 from seflag.data.lexical import LexicalDataset
 from seflag.errors import ConfigError, DataError
@@ -22,6 +24,10 @@ from seflag.tasks.base import LexicalTask
 from seflag.normalization import get_pipeline
 
 logger = logging.getLogger("seflag")
+
+
+# version of the result file layout; increased when fields change incompatibly
+RESULT_FORMAT_VERSION: int = 1
 
 
 @dataclass
@@ -38,9 +44,27 @@ class EvaluationResult:
     path: Path | None = None  # where the result was saved, if at all
 
     def to_dict(self) -> dict[str, Any]:
-        data: dict[str, Any] = asdict(self)
+        data: dict[str, Any] = {"format_version": RESULT_FORMAT_VERSION, **asdict(self)}
         data.pop("path")
         return data
+
+    @classmethod
+    def load(cls, path: str | Path) -> EvaluationResult:
+        """Reads a result file written by :meth:`save` (or by ``seflag run``)."""
+        path = Path(path)
+        try:
+            data: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as e:
+            raise DataError(f"Cannot read result file {path}: {e}") from e
+        if not isinstance(data, dict) or not {"metrics", "config", "provenance"} <= data.keys():
+            raise DataError(f"{path} is not a SEFLAG result file.")
+        version: int = data.get("format_version", 1)  # files from before format versions match version 1
+        if version > RESULT_FORMAT_VERSION:
+            raise DataError(f"{path} uses result format {version}; this seflag version reads up to "
+                            f"{RESULT_FORMAT_VERSION}. Please upgrade seflag.")
+        fields: dict[str, Any] = {name: data[name] for name in ("name", "task", "language", "metrics", "by_subset",
+                                                                  "details", "config", "provenance") if name in data}
+        return cls(**{"by_subset": {}, "details": {}, **fields}, timings=data.get("timings", {}), path=path)
 
     def save(self, path: Path) -> Path:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -62,25 +86,6 @@ class EvaluationResult:
         return "\n".join(lines)
 
 
-def _build(kind: str, spec_name: str, params: dict[str, Any], section: str, *args: Any) -> Any:
-    component: type = registry.get(kind, spec_name)
-    return component(validate_component_params(component, params, section), *args)
-
-
-def _backend(config: EvaluationConfig):
-    component: type = registry.get("backends", config.model.backend)
-    params = validate_component_params(component, config.model.params, "model")  # validate before launching
-    if config.model.launcher is None:
-        return component(params, config)
-    if issubclass(component, EmbeddingBackend):
-        raise ConfigError("'launcher' is not supported for embedding backends yet; run them in the current "
-                          "environment.")
-    from seflag.backends.launched import LaunchedBackend
-    from seflag.launcher import python_command
-
-    return LaunchedBackend(config, python_command(config.model.launcher))
-
-
 def _run_tokens(config: EvaluationConfig, task, dataset, backend, timings: dict[str, float]):
     start: float = time.perf_counter()
     gold: list[Doc] = dataset.load_docs(Vocab(), task.required_layers, config.options.max_sentences)
@@ -93,6 +98,7 @@ def _run_tokens(config: EvaluationConfig, task, dataset, backend, timings: dict[
     inputs: list[list[str]] = [[normalize(t.text) for t in doc] for doc in gold]
     start = time.perf_counter()
     predicted: list[Doc] = backend.predict(inputs)
+    check_predictions(inputs, predicted, config.model.backend)
     timings["predict_s"] = time.perf_counter() - start
     logger.info("Annotated with %s backend in %.1fs", config.model.backend, timings["predict_s"])
 
@@ -117,9 +123,9 @@ def _run_lexical(config: EvaluationConfig, task, dataset, backend, timings: dict
 def run(config: EvaluationConfig) -> EvaluationResult:
     """Runs one evaluation: load gold data, annotate it with the model, compare, record provenance."""
     timings: dict[str, float] = {}
-    task = _build("tasks", config.task.type, config.task.params, "task", config.options)
-    dataset = _build("datasets", config.dataset.source, config.dataset.params, "dataset", config)
-    backend = _backend(config)
+    task = build_task(config)
+    dataset = build_dataset(config)
+    backend = build_backend(config)
 
     if isinstance(task, LexicalTask) != isinstance(dataset, LexicalDataset) or \
             isinstance(task, LexicalTask) != isinstance(backend, EmbeddingBackend):
@@ -141,13 +147,20 @@ def run(config: EvaluationConfig) -> EvaluationResult:
         details=task_result.details,
         config=config.model_dump(mode="json"),
         provenance=provenance.collect(dataset.fingerprint(), backend.metadata(),
-                                      extra_packages=[str(config.model.params["name"])] if "name" in config.model.params else []),
+                                      extra_packages=[str(config.model.params["name"])]
+                                      if "name" in config.model.params else []),
         timings=timings,
     )
     if config.output.dir is not None:
         stamp: str = result.provenance["timestamp"].replace(":", "").replace("+0000", "Z")
-        file_name: str = re.sub(r"[^\w.-]+", "_", f"{result.name}_{stamp}") + ".json"
+        stem: str = re.sub(r"[^\w.-]+", "_", f"{result.name}_{stamp}")
         # relative to the working directory, not to the configuration file (which may be installed read-only)
-        result.save(config.output.dir.expanduser().resolve() / file_name)
+        directory: Path = config.output.dir.expanduser().resolve()
+        target: Path = directory / f"{stem}.json"
+        counter: int = 2
+        while target.exists():  # another run of the same evaluation within the same second
+            target = directory / f"{stem}_{counter}.json"
+            counter += 1
+        result.save(target)
         logger.info("Results written to %s", result.path)
     return result

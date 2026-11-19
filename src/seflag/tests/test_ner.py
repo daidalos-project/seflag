@@ -28,7 +28,7 @@ def test_decode(tags, scheme, expected):
 
 
 def test_overlapping_gold_entities_are_rejected():
-    record = SentenceRecord(tokens=[TokenRecord(form=w) for w in "a b c".split()],
+    record = SentenceRecord(tokens=[TokenRecord(form=w) for w in ["a", "b", "c"]],
                             entities=[E(1, 2, "X"), E(2, 3, "Y")])
     with pytest.raises(DataError, match="overlapping"):
         record_to_doc(Vocab(), record, {"entities"})

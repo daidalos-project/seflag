@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import logging
-import os
 import re
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Iterable, Iterator
+from typing import Any
+from collections.abc import Iterable, Iterator
 
 from pydantic import Field
 

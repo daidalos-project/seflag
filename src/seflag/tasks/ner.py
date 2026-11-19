@@ -142,7 +142,7 @@ class NerTask(Task):
         metrics["per_label"] = labels_report
         metrics["unlabeled"] = _prf(c["span_correct"], c["gold"], c["predicted"])
         token_report: dict[str, Any] = classification_report(token_gold, token_pred)
-        token_report["accuracy"] = (sum(a == b for a, b in zip(token_gold, token_pred)) / len(token_gold)
+        token_report["accuracy"] = (sum(a == b for a, b in zip(token_gold, token_pred, strict=True)) / len(token_gold)
                                     if token_gold else None)
         metrics["token_level"] = token_report
         if skipped:

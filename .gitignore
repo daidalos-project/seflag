@@ -5,6 +5,7 @@ __pycache__/
 .env
 gold_standards/
 word_embeddings/
+.coverage
 *.csv
 table.md
 data/conllu_data/

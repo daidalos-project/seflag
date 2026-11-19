@@ -164,7 +164,8 @@ class MorphologyTask(Task):
             "top_errors": top_errors(full_gold, full_pred, n),
             "top_feature_errors": [{"feature": f, "gold": g, "predicted": p, "count": c}
                                    for (f, g, p), c in feature_errors.most_common(n)],
-            "features_never_predicted": sorted(k for k, v in per_feature.items() if v["support"] and not v["predicted"]),
+            "features_never_predicted": sorted(k for k, v in per_feature.items()
+                                               if v["support"] and not v["predicted"]),
             "features_not_in_gold": sorted(k for k, v in per_feature.items() if v["predicted"] and not v["support"]),
         }
         if self.model_features is not None:

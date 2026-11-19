@@ -2,14 +2,15 @@ from __future__ import annotations
 
 import itertools
 from abc import ABC, abstractmethod
-from typing import Any, ClassVar, Iterator
+from typing import Any, ClassVar
+from collections.abc import Iterable, Iterator
 
 from pydantic import BaseModel, ConfigDict
 from spacy.tokens import Doc
 from spacy.vocab import Vocab
 
 from seflag.config import EvaluationConfig
-from seflag.data.records import SentenceRecord, check_layers_present, record_to_doc
+from seflag.data.records import SentenceRecord, check_layers_present, present_layers, record_to_doc
 
 
 class DatasetAdapter(ABC):
@@ -43,3 +44,16 @@ class DatasetAdapter(ABC):
         loaded: list[SentenceRecord] = list(records)
         check_layers_present(loaded, layers)
         return [record_to_doc(vocab, r, layers) for r in loaded]
+
+    def docs(self, layers: Iterable[str] | None = None, max_sentences: int | None = None,
+             vocab: Vocab | None = None) -> list[Doc]:
+        """The gold sentences as spaCy ``Doc`` objects, e.g. for use outside of an evaluation.
+
+        ``layers``: annotation layers to include (see :data:`seflag.data.records.LAYERS`); default: all layers
+        annotated in the data. Sentence ids, texts and subsets are kept in ``Doc.user_data``.
+        """
+        records: list[SentenceRecord] = list(itertools.islice(self.records(), max_sentences))
+        chosen: set[str] = set(layers) if layers is not None else present_layers(records)
+        check_layers_present(records, chosen)
+        vocab = vocab or Vocab()
+        return [record_to_doc(vocab, r, chosen) for r in records]

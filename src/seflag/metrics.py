@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
-from typing import Any, Hashable, Sequence
+from typing import Any
+from collections.abc import Hashable, Sequence
 
 
 def _check(gold: Sequence, pred: Sequence) -> None:
@@ -16,7 +17,7 @@ def accuracy(gold: Sequence[Hashable], pred: Sequence[Hashable]) -> float | None
     _check(gold, pred)
     if not gold:
         return None
-    return sum(g == p for g, p in zip(gold, pred)) / len(gold)
+    return sum(g == p for g, p in zip(gold, pred, strict=True)) / len(gold)
 
 
 def _safe_div(a: float, b: float) -> float:
@@ -30,7 +31,7 @@ def classification_report(gold: Sequence[Hashable], pred: Sequence[Hashable]) ->
     predicted (with recall 0 and support 0), which is the scikit-learn convention.
     """
     _check(gold, pred)
-    tp: Counter = Counter(g for g, p in zip(gold, pred) if g == p)
+    tp: Counter = Counter(g for g, p in zip(gold, pred, strict=True) if g == p)
     gold_counts: Counter = Counter(gold)
     pred_counts: Counter = Counter(pred)
     labels: list = sorted(set(gold_counts) | set(pred_counts), key=str)
@@ -55,7 +56,7 @@ def confusion_matrix(gold: Sequence[Hashable], pred: Sequence[Hashable]) -> dict
     """Nested counts ``matrix[gold_label][predicted_label]``."""
     _check(gold, pred)
     matrix: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
-    for g, p in zip(gold, pred):
+    for g, p in zip(gold, pred, strict=True):
         matrix[str(g)][str(p)] += 1
     return {g: dict(row) for g, row in sorted(matrix.items())}
 
@@ -63,7 +64,7 @@ def confusion_matrix(gold: Sequence[Hashable], pred: Sequence[Hashable]) -> dict
 def top_errors(gold: Sequence[Hashable], pred: Sequence[Hashable], n: int) -> list[dict[str, Any]]:
     """The n most frequent (gold, predicted) confusions."""
     _check(gold, pred)
-    errors: Counter = Counter((g, p) for g, p in zip(gold, pred) if g != p)
+    errors: Counter = Counter((g, p) for g, p in zip(gold, pred, strict=True) if g != p)
     return [{"gold": g, "predicted": p, "count": c} for (g, p), c in errors.most_common(n)]
 
 
@@ -89,7 +90,7 @@ def pearson(x: Sequence[float], y: Sequence[float]) -> float | None:
     if n < 2:
         return None
     mx, my = sum(x) / n, sum(y) / n
-    sxy = sum((a - mx) * (b - my) for a, b in zip(x, y))
+    sxy = sum((a - mx) * (b - my) for a, b in zip(x, y, strict=True))
     sxx = sum((a - mx) ** 2 for a in x)
     syy = sum((b - my) ** 2 for b in y)
     return sxy / (sxx * syy) ** 0.5 if sxx and syy else None

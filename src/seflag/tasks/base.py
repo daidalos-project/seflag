@@ -39,8 +39,11 @@ class Task(ABC):
     def required_layers(self) -> set[str]:
         """Gold annotation layers (see seflag.data.records.LAYERS) needed by this task."""
 
-    def bind_backend(self, backend: Any) -> None:
-        """Called after prediction and before evaluation; lets a task query the backend (e.g. label inventories)."""
+    def bind_backend(self, backend: Any) -> None:  # noqa: B027 - optional hook, deliberately empty
+        """Called after prediction and before evaluation; lets a task query the backend (e.g. label inventories).
+
+        Optional: the default does nothing.
+        """
 
     @abstractmethod
     def evaluate(self, gold: list[Doc], predicted: list[Doc]) -> TaskResult:

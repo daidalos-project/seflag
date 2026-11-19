@@ -68,7 +68,7 @@ class SpacyBackend(Backend):
                 for token in doc:
                     token.is_sent_start = token.i == 0
         outputs: list[Doc] = list(nlp.pipe(inputs, batch_size=self.config.batch_size))
-        for words, doc in zip(sentences, outputs):
+        for words, doc in zip(sentences, outputs, strict=True):
             if len(doc) != len(words):
                 raise SeflagError(
                     f"Pipeline '{self.config.name}' changed the tokenization ({len(words)} -> {len(doc)} tokens). "

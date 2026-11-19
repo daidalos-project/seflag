@@ -33,7 +33,7 @@ class LaunchedBackend(Backend):
             }), encoding="utf-8")
             output = Path(tmp) / "output"
             try:
-                done = subprocess.run([*self.command, "-m", "seflag.worker", str(request), str(output)])
+                done = subprocess.run([*self.command, "-m", "seflag.worker", str(request), str(output)], check=False)
             except OSError as e:
                 raise SeflagError(f"Could not start the backend with {self.command}: {e}") from e
             if done.returncode != 0:
