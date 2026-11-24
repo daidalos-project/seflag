@@ -290,6 +290,22 @@ def test_uv_command(monkeypatch):
     assert launcher.python_command(launcher.LauncherSpec(command=command)) == command  # no uv needed
 
 
+def test_seflag_requirement_from_local_tree(monkeypatch, tmp_path):
+    import json
+
+    from seflag import launcher
+
+    tree = tmp_path / "my seflag"  # a space: percent-encoded in the file URL
+    direct_url = json.dumps({"url": tree.as_uri(), "dir_info": {"editable": True}})
+
+    class Distribution:
+        def read_text(self, name):
+            return direct_url
+
+    monkeypatch.setattr(launcher, "distribution", lambda name: Distribution())
+    assert launcher.seflag_requirement() == (str(tree), True)
+
+
 @pytest.mark.parametrize("launcher", [{}, {"command": []}, {"command": ["python"], "requirements": ["x"]},
                                       {"unknown": 1}])
 def test_invalid_launcher(launcher):

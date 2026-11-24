@@ -65,6 +65,19 @@ def test_directory_and_fingerprint(conllu_dir):
     assert len(ds.fingerprint()["files"]) == 2
 
 
+def test_file_keys_use_slashes_and_survive_other_drives(conllu_dir, monkeypatch):
+    from seflag.data import files
+
+    path = conllu_dir / "la_test-ud-test.conllu"
+    assert files.file_key(path, conllu_dir.parent) == "data/la_test-ud-test.conllu"
+
+    def other_drive(path, start):
+        raise ValueError("path is on mount 'C:', start on mount 'D:'")  # what Windows raises
+
+    monkeypatch.setattr(files.os.path, "relpath", other_drive)
+    assert files.file_key(path, conllu_dir.parent) == path.resolve().as_posix()
+
+
 def test_missing_path(tmp_path):
     with pytest.raises(DataError):
         list(make_dataset(tmp_path / "missing").records())

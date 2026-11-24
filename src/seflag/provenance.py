@@ -16,7 +16,7 @@ TRACKED_PACKAGES: tuple[str, ...] = (
 def package_versions(extra: list[str] | None = None) -> dict[str, str]:
     versions: dict[str, str] = {}
     for name in (*TRACKED_PACKAGES, *(extra or [])):
-        if not name or "/" in name:  # e.g. a model given as a directory path rather than a package
+        if not name or "/" in name or "\\" in name:  # e.g. a model given as a directory path, not a package
             continue
         with contextlib.suppress(PackageNotFoundError, ValueError):  # not installed, or not a package name
             versions[name] = version(name)

@@ -1,3 +1,7 @@
+[![Tests](https://github.com/daidalos-project/seflag/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/daidalos-project/seflag/actions/workflows/tests.yml)
+[![PyPI](https://img.shields.io/pypi/v/seflag)](https://pypi.org/project/seflag/)
+[![Python versions](https://img.shields.io/pypi/pyversions/seflag)](https://pypi.org/project/seflag/)
+[![License](https://img.shields.io/github/license/daidalos-project/seflag)](LICENSE)
 [![DOI](https://zenodo.org/badge/803810381.svg)](https://doi.org/10.5281/zenodo.13951323)
 
 # SEFLAG

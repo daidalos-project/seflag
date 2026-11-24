@@ -14,6 +14,12 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "network: tests that need internet access (skipped without it)")
 
 
+@pytest.fixture
+def tmp_path(tmp_path: Path) -> Path:
+    """pytest's tmp_path, resolved: on Windows it can be an 8.3 short path (C:\\Users\\RUNNER~1\\...), while SEFLAG
+    resolves relative paths and output directories to their long form, so the two would not compare equal."""
+    return tmp_path.resolve()
+
 
 SAMPLE_CONLLU = """# sent_id = s1
 # text = Arma virumque cano

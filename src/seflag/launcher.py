@@ -35,6 +35,8 @@ import json
 import shutil
 import sys
 from importlib.metadata import PackageNotFoundError, distribution
+from urllib.parse import urlparse
+from urllib.request import url2pathname
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -76,7 +78,8 @@ def seflag_requirement() -> tuple[str, bool]:
         info: dict = json.loads(direct_url)
         url: str = info.get("url", "")
         if url.startswith("file://") and "dir_info" in info:  # installed from a local source tree
-            return url.removeprefix("file://"), bool(info["dir_info"].get("editable"))
+            # file:///C:/a%20b -> C:\a b on Windows, file:///home/a%20b -> /home/a b elsewhere
+            return url2pathname(urlparse(url).path), bool(info["dir_info"].get("editable"))
     return f"seflag=={__version__}", False
 
 

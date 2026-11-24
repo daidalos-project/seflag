@@ -30,8 +30,19 @@ def collect_files(entries: list[Path], pattern: str) -> list[Path]:
     return files
 
 
+def file_key(path: Path, relative_to: Path) -> str:
+    """``path`` relative to ``relative_to``, with '/' on every OS so that fingerprints compare across platforms.
+
+    On Windows, a file on another drive than ``relative_to`` has no relative path; its absolute path is used.
+    """
+    try:
+        return Path(os.path.relpath(path, relative_to)).as_posix()
+    except ValueError:  # e.g. path on C:, relative_to on D:
+        return Path(path).resolve().as_posix()
+
+
 def file_hashes(files: list[Path], relative_to: Path) -> dict[str, str]:
-    return {os.path.relpath(p, relative_to): hashlib.sha256(p.read_bytes()).hexdigest() for p in files}
+    return {file_key(p, relative_to): hashlib.sha256(p.read_bytes()).hexdigest() for p in files}
 
 
 class FileSource(BaseModel):
