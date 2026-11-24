@@ -29,8 +29,15 @@ print("</words>")
 '''
 
 
+def skip_on_windows():
+    """The fake Morpheus runs through its shebang line and its fake build needs make: neither works on Windows."""
+    if sys.platform == "win32":
+        pytest.skip("Morpheus runs on Linux and macOS only")
+
+
 @pytest.fixture
 def morpheus(tmp_path, monkeypatch):
+    skip_on_windows()
     (tmp_path / "bin").mkdir()
     program = tmp_path / "bin" / "morpheus"
     program.write_text(FAKE_MORPHEUS.format(python=sys.executable), encoding="utf-8")
@@ -85,6 +92,7 @@ def test_morpheus_install_never(monkeypatch):
 @pytest.fixture
 def morpheus_source(tmp_path, monkeypatch):
     """A fake Morpheus source release whose makefiles 'build' the fake Morpheus script."""
+    skip_on_windows()
     top = tmp_path / "src" / f"morpheus-perseids-{morpheus_install.VERSION}"
     (top / "stemlib" / "Latin").mkdir(parents=True)
     for directory, target in morpheus_install.TARGETS:
@@ -119,6 +127,14 @@ def test_morpheus_auto_install_needs_build_tools(morpheus_source, monkeypatch):
     with pytest.raises(MissingDependencyError, match="needs make"):
         morpheus_backend("la").predict([["x"]])
     assert morpheus_install.installed() is None
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_morpheus_auto_install_windows(monkeypatch, tmp_path):
+    monkeypatch.setenv("SEFLAG_HOME", str(tmp_path))
+    monkeypatch.delenv("MORPHEUS_PATH", raising=False)
+    with pytest.raises(MissingDependencyError, match="WSL"):
+        morpheus_backend("la").predict([["x"]])
 
 
 # --- flair ------------------------------------------------------------------------------------------------
