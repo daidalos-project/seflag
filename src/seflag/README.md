@@ -39,6 +39,14 @@ name and the model authors replace or delete older wheels. Both models need spaC
 Morpheus is downloaded and compiled automatically on first use (Linux and macOS; needs a C compiler and `make`),
 unless `$MORPHEUS_PATH` points to an existing installation.
 
+## Platform support
+
+SEFLAG runs on Linux, macOS and Windows (tested in CI with Python 3.10 and 3.13 on Windows and macOS). One
+exception: **Morpheus is not available on native Windows.** It is built from C sources with `make`, and
+SEFLAG's Docker launcher cannot share its temporary files with a Linux container from Windows. Run SEFLAG in
+[WSL](https://learn.microsoft.com/windows/wsl/) instead, where everything works as on Linux. The optional
+extras (`hf`, `transformers`, `flair`, `embeddings`) are tested on Linux only.
+
 ## Quick start
 
 `latincy_lemma.yaml`:
@@ -139,6 +147,20 @@ Choices that silently change results are named options and stored with every res
 * `options.sentence_segmentation`: gold sentences (default) or the model's own;
 * `task.exclude_upos`, `task.features`, `task.deprel_subtypes`, `task.gold_labels` / `task.predicted_labels` (label
   mappings for NER), and more.
+
+The two normalization options act at different points and are independent. `input_normalization` changes the
+words the model sees; `label_normalization` changes only what counts as a match, on both the gold and the predicted
+side. When the data and the model follow different spelling conventions, you usually need both. Suppose a treebank
+writes *venit* with the lemma *venio*, and the model was trained on text with only *u*:
+
+* with only `input_normalization: [v_to_u]`, the model receives *uenit* and predicts *uenio*, which still differs
+  from the gold *venio*;
+* with only `label_normalization: [v_to_u]`, *uenio* and *venio* match, but the model was given *venit*, a spelling
+  it may not know, and may predict a worse lemma.
+
+Other cases need just one of them: Morpheus lemmas need `strip_homonym_digits` only as a label normalization
+(*sum1* → *sum*), and the shipped examples normalize labels only, so that the models are tested on the spelling of
+the data as it is.
 
 `seflag list -v` shows every task, data source, backend and normalizer with all its options and their allowed
 values. Configurations are validated completely when they are loaded, including each component's options, and

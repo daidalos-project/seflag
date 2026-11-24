@@ -26,7 +26,9 @@ the same path (shown for Linux, where it is under /tmp), and ``path`` refers to 
       launcher:
         command: [docker, run, --rm, -v, /tmp:/tmp, my-seflag-morpheus-image, python]
 
-SEFLAG does not build or manage such images.
+SEFLAG does not build or manage such images. This does not work from native Windows, whose temporary
+directory (e.g. ``C:/Users/<name>/AppData/Local/Temp``) cannot be mounted at the same path in a Linux
+container; use WSL there.
 """
 
 from __future__ import annotations

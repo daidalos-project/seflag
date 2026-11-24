@@ -4,7 +4,7 @@ Morpheus Perseids publishes no binaries, but its releases contain the precompile
 analyser itself has to be compiled: this takes a few seconds and needs a C compiler (``cc``, or ``$CC``),
 ``make`` and ``ar`` (Linux: e.g. ``apt install build-essential``; macOS: ``xcode-select --install``). flex,
 which the upstream build instructions list, is only needed for the tools that rebuild the stem library and is
-not required. Windows is not supported; use WSL, or a Docker launcher (see :mod:`seflag.launcher`).
+not required. Native Windows is not supported: use WSL, where this works as on Linux.
 
 The installation goes to ``$SEFLAG_HOME/tools/morpheus-<version>`` (default ``~/.cache/seflag``) and is
 reused afterwards; ``seflag cache purge`` deletes it (it is rebuilt on next use).
@@ -57,8 +57,8 @@ def ensure_installed() -> Path:
         return root
     if sys.platform == "win32":
         raise MissingDependencyError(
-            "Morpheus cannot be installed automatically on Windows. Run SEFLAG in WSL, or set 'path' to a "
-            "Morpheus installation, e.g. inside Docker via a launcher (see the documentation of seflag.launcher).")
+            "Morpheus is not available on native Windows. Run SEFLAG in WSL "
+            "(https://learn.microsoft.com/windows/wsl/), where Morpheus is built automatically as on Linux.")
     compiler: str = os.environ.get("CC", "cc")
     missing: list[str] = [tool for tool in (compiler, "make", "ar") if shutil.which(tool) is None]
     if missing:
