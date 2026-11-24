@@ -59,6 +59,14 @@ def test_conllu_errors_name_the_line(bad, message):
         list(parse_conllu_lines(bad.splitlines(keepends=True), "x.conllu"))
 
 
+def test_conllu_with_crlf_line_endings(conllu_dir, tmp_path):
+    """Files saved with Windows line endings read the same; SEFLAG itself always writes LF."""
+    source = conllu_dir / "la_test-ud-test.conllu"
+    crlf = tmp_path / source.name  # same name: the subset comes from the file name
+    crlf.write_bytes(source.read_bytes().replace(b"\n", b"\r\n"))
+    assert [r.to_dict() for r in read_conllu_files([crlf])] == [r.to_dict() for r in read_conllu_files([source])]
+
+
 def test_directory_and_fingerprint(conllu_dir):
     ds = make_dataset(conllu_dir)
     assert len(list(ds.records())) == 4

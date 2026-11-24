@@ -58,8 +58,10 @@ class LowercaseBackend(Backend):
 def conllu_dir(tmp_path: Path) -> Path:
     d = tmp_path / "data"
     d.mkdir()
-    (d / "la_test-ud-test.conllu").write_text(SAMPLE_CONLLU, encoding="utf-8")
-    (d / "la_other-ud-dev.conllu").write_text(SAMPLE_CONLLU.replace("s1", "o1").replace("s2", "o2"), encoding="utf-8")
+    # newline="\n": CoNLL-U files use LF (as SEFLAG writes them), also on Windows, where text mode would write CRLF
+    (d / "la_test-ud-test.conllu").write_text(SAMPLE_CONLLU, encoding="utf-8", newline="\n")
+    (d / "la_other-ud-dev.conllu").write_text(SAMPLE_CONLLU.replace("s1", "o1").replace("s2", "o2"),
+                                               encoding="utf-8", newline="\n")
     return d
 
 
