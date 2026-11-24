@@ -15,7 +15,7 @@ against them.
 | Discrepancy | Where | Measured effect |
 |---|---|---|
 | Greek elision mark: each treebank uses a different one (U+0313, U+2019, U+1FBF); greCy only recognises U+02BC, Morpheus only U+2019/U+0027, the BERT tokenizer turns U+02BC/U+1FBD/U+1FBF into `[UNK]` | UD Greek, NER (Yousef), all Greek models | greCy lemma accuracy 0.9047 → 0.9217 with `input_normalization: [elision_to_u02bc]`; Morpheus 0.8613 → 0.8755 after the backend fix; 719 NER test tokens (1.8%) become `[UNK]` (no measurable effect on NER) |
-| Latin u/v and i/j: LatinCy lemmas follow the spelling of the form, Morpheus outputs v/j lemmas, the UD treebanks use both | UD Latin, LatinCy, Morpheus | LatinCy +1.5 points with `label_normalization: [v_to_u, j_to_i]` (UDante +5.1, LLCT +3.9); Morpheus +3.9 points |
+| Latin u/v and i/j: LatinCy lemmas follow the spelling of the form, Morpheus and Lamon output v/j lemmas, the UD treebanks use both | UD Latin, LatinCy, Morpheus, Lamon | LatinCy +1.5 points with `label_normalization: [v_to_u, j_to_i]` (UDante +5.1, LLCT +3.9); Morpheus +3.9 points; Lamon +4.3 points |
 | Lemma case: CIRCSE, ITTB and UDante lowercase all lemmas, including proper names; the other treebanks capitalize them, LatinCy only sometimes | UD Latin | LatinCy another +2.5 points with `lowercase` (LLCT +8.4, PROIEL +3.8) |
 | NFD input: Greek models are trained on NFC | greCy, Greek fastText (Morpheus before the fix) | greCy lemma accuracy 0.88 → 0.11, UPOS identical on only 47% of tokens; fastText coverage 70% → 0% |
 | Case of Greek words: the Greek fastText vocabulary is lowercased, AGREE is not | AGREE, Greek fastText | Coverage 70.2% → 82.7% when matched case-insensitively (`case_insensitive: true`) |
@@ -49,7 +49,7 @@ elision mark replaced by another, input and label normalizations). The accuracie
 complete test sets unless a sample is mentioned.
 
 Environment: Python 3.11.9 (Unicode 14.0), spaCy 3.7.6, transformers 4.36.2, gensim 4.3.2, flair 0.13.1,
-betacode 1.0, Morpheus 1.0.3.
+betacode 1.0, Morpheus 1.0.3, lamonpy 0.2.0 (in Python 3.8.20).
 
 ## Datasets
 
@@ -248,6 +248,41 @@ are lexical gaps.
   * Lemmas are in v/j spelling (`vir`, `juvenis`) with homonym numbers.
   * Lemma accuracy on UD Latin with `strip_homonym_digits` is 0.6912. Adding `v_to_u` and `j_to_i` raises it to
     0.7305: CIRCSE +7.1, UDante +5.2, ITTB +4.2 points.
+
+### Lamon (lamonpy 0.2.0), through SEFLAG's `lamon` backend
+
+Runs in a separate Python 3.8 environment (see `seflag.backends.lamon`). Measured on UD Latin 2.15 (111,361 scored
+tokens):
+
+* **Input:** u/v and i/j do not matter. `input_normalization: [v_to_u, j_to_i]` leaves the lemma accuracy
+  unchanged at 0.8566. Lamon tokenizes the text itself; the backend maps its tokens back to the gold tokens.
+* **Lemmas:**
+  * They are in v/j spelling (`venio`, `Julius`), lowercase except for proper names, and numbered for homonyms
+    (`cum2`). Numbers (`26`, `XII`) get the lemma `[NUM]`, which the backend replaces with the form.
+  * Lemma accuracy is 0.7950 without normalization, 0.8136 with `strip_homonym_digits`, and 0.8566 with
+    `strip_homonym_digits`, `v_to_u` and `j_to_i`. The v/j normalizations add 7.3 points on CIRCSE, 5.7 on ITTB and
+    5.5 on UDante, and nothing on Perseus and PROIEL, whose lemmas are already in v/j spelling.
+  * Lamon was trained on the Perseus Latin Dependency Treebank, so its score on UD Perseus (0.9045) may be
+    inflated by overlap with its training data.
+* **POS:** Lamon outputs Perseus positional tags, which the backend converts to UPOS. UPOS accuracy is 0.7074.
+  Perseus has no PROPN, AUX, DET, PART or SCONJ: these gold tokens are tagged NOUN, VERB, PRON, ADV or CCONJ.
+  They make up 19.0% of the test data (21,138 tokens), so the reachable maximum is 0.8102. On the remaining
+  tokens, Lamon is right 87.3% of the time.
+* **Morphological features:** the backend converts the tags to the UD features Person, Number, Tense, Aspect, Mood,
+  VerbForm, Voice, Gender, Case and Degree. It follows the harmonized conventions of five of the six UD Latin
+  treebanks (CIRCSE, ITTB, LLCT, Perseus, UDante):
+  * every finite form has an aspect (`Imp` for the present system, `Perf` for the perfect system);
+  * infinitives and participles have an aspect but no tense;
+  * the positive degree is unmarked, and the superlative is `Degree=Abs`.
+
+  UD PROIEL differs: no aspect in the present system, tense on participles, and `Degree=Pos`/`Sup`. With the
+  original Perseus readings instead (`Degree=Pos`, tense on participles), accuracy is 0.5888 instead of 0.6785.
+
+  With `features: model` (only these 10 features), all features of a token are right in 0.6785 of the tokens
+  (Perseus 0.8011, ITTB 0.7787, PROIEL 0.5930, CIRCSE 0.6025). The per-feature F1 ranges from 0.941 for Mood and
+  0.921 for Number to 0.762 for Case and 0.214 for Degree. With `features: universal`, as for LatinCy, accuracy is
+  0.5872, because Lamon has no PronType, Poss, Reflex, NumType, Polarity, Abbr or Foreign. The deponent voice has
+  no UD value and is left out.
 
 ## Discrepancies in the example configurations
 

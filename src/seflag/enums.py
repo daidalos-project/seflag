@@ -89,6 +89,7 @@ class BackendName(StrEnum):
     TRANSFORMERS = "transformers"
     FLAIR = "flair"
     MORPHEUS = "morpheus"
+    LAMON = "lamon"
     GENSIM = "gensim"
 
 

@@ -10,7 +10,7 @@ package and model versions, and a fingerprint of the data.
 * **Tasks:** lemmatization, POS tagging, morphological features, dependency parsing (CoNLL 2018 metrics), named
   entity recognition, and word embeddings (similarity, neighbour retrieval, synonym selection).
 * **Models:** spaCy pipelines (e.g. LatinCy, greCy), Hugging Face transformers, Flair, the Morpheus morphological
-  analyser, and fastText/word2vec embeddings via gensim.
+  analyser, the Lamon Latin tagger, and fastText/word2vec embeddings via gensim.
 * **Data:** CoNLL-U and CoNLL-style column files, local or in any Hugging Face Hub repository, Hub datasets, and
   files downloaded by URL with checksum verification (e.g. from Zenodo).
 
@@ -38,6 +38,10 @@ name and the model authors replace or delete older wheels. Both models need spaC
 
 Morpheus is downloaded and compiled automatically on first use (Linux and macOS; needs a C compiler and `make`),
 unless `$MORPHEUS_PATH` points to an existing installation.
+
+Lamon ([lamonpy](https://github.com/bab2min/lamonpy)) only has wheels for Python 3.8 and older, so SEFLAG runs it
+in a separate Python 3.8 environment that [uv](https://docs.astral.sh/uv/) creates on first use (uv downloads
+Python 3.8 and lamonpy once). Install uv, or set `model.command` to a Python interpreter that has lamonpy.
 
 ## Platform support
 
@@ -86,7 +90,7 @@ written to `output.dir` (default `seflag_results`) relative to the current worki
 ## Example configurations
 
 The package ships about 20 ready-to-run configurations for the evaluations behind SEFLAG's published results
-(LatinCy, greCy, Morpheus, UGARIT NER models, fastText embeddings). They are installed with the package:
+(LatinCy, greCy, Morpheus, Lamon, UGARIT NER models, fastText embeddings). They are installed with the package:
 
 ```bash
 python -c "import importlib.resources as r; print(r.files('seflag') / 'examples')"

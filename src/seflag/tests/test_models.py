@@ -5,6 +5,7 @@ that SEFLAG's install hints pin (backends/spacy.py), with spaCy 3.8; other versi
 """
 
 import os
+import shutil
 from importlib.metadata import version
 from pathlib import Path
 
@@ -97,6 +98,18 @@ def test_ner_backends(config_name, expected):
 def test_morpheus(config_name, expected):
     if not (morpheus_install.installed() or "MORPHEUS_PATH" in os.environ):
         pytest.skip("Morpheus not installed (built on first use, or set MORPHEUS_PATH)")
+    assert run(load_config(EXAMPLES / config_name, output={"dir": None})).metrics["accuracy"] == \
+        pytest.approx(expected, abs=5e-4)
+
+
+@pytest.mark.parametrize("config_name, expected", [
+    ("lamon_lemma_ud.yaml", 0.8566),
+    ("lamon_pos_ud.yaml", 0.7074),
+    ("lamon_morph_ud.yaml", 0.6785),
+])
+def test_lamon(config_name, expected):
+    if shutil.which("uv") is None:
+        pytest.skip("uv not installed (it creates Lamon's Python 3.8 environment on first use)")
     assert run(load_config(EXAMPLES / config_name, output={"dir": None})).metrics["accuracy"] == \
         pytest.approx(expected, abs=5e-4)
 

@@ -1,0 +1,17 @@
+# Lamon (lamonpy 0.2.0) UPOS tagging on the test sets of all Latin UD 2.15 treebanks (Hugging Face Hub).
+# Lamon's Perseus tags are converted to UPOS. Perseus has no PROPN, AUX, DET or SCONJ: such gold tokens are tagged
+# NOUN, VERB, PRON or CCONJ and count as errors (see the per-tag scores and the confusion matrix in the results).
+# Runs lamonpy in a separate Python 3.8 environment that uv creates on first use (see lamon_lemma_ud.yaml).
+name: lamon-upos-ud-latin
+language: la
+task:
+  type: pos_tagging
+  tagset: upos
+dataset:
+  source: huggingface
+  repo: daidalos-project/latin_treebanks_ud_test
+  revision: 14ab3708f8f55eaa700ac5828cb3351fe5346474   # pinned for reproducibility
+  split: test
+model:
+  backend: lamon
+  workers: 4          # threads; does not change the results

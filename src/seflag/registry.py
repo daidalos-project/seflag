@@ -33,6 +33,7 @@ BUILTINS: dict[str, dict[str, str]] = {
         "transformers": "seflag.backends.transformers:TransformersBackend",
         "flair": "seflag.backends.flair:FlairBackend",
         "morpheus": "seflag.backends.morpheus:MorpheusBackend",
+        "lamon": "seflag.backends.lamon:LamonBackend",
         "gensim": "seflag.backends.embeddings:GensimBackend",
     },
     "tasks": {
